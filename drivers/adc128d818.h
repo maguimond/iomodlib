@@ -27,9 +27,9 @@ extern "C"
 {
 #endif
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Constants
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Slave addresses.
 typedef enum
 {
@@ -203,18 +203,18 @@ typedef enum
 // Revision ID register. Reports the revision's ID, R, 8-bit.
 #define kADC128D818_RegisterRevisionID 0x3F
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Macros
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // For asserts.
 #define mADC128D818IsMode(modeSelect) ((modeSelect == kADC128D818_Mode_Temp) || (modeSelect == kADC128D818_Mode_SingleEnded) || (modeSelect == kADC128D818_Mode_PseudoDiff) || (modeSelect == kADC128D818_Mode_HalfPseudiDiff))
 #define mADC128D818IsDeepShutdown(deepShutdown) ((deepShutdown == kADC128D818_RegisterDeepShutdown_DeepShutdownDisable) || (deepShutdown == kADC128D818_RegisterDeepShutdown_DeepShutdownEnable))
 #define mADC128D818IsChannelReadings(channel) ((channel == kADC128D818_RegisterChannel0Read) || (channel == kADC128D818_RegisterChannel1Read) || (channel == kADC128D818_RegisterChannel2Read) || (channel == kADC128D818_RegisterChannel3Read) || (channel == kADC128D818_RegisterChannel4Read) || (channel == kADC128D818_RegisterChannel5Read) || (channel == kADC128D818_RegisterChannel6Read) || (channel == kADC128D818_RegisterChannel7Read))
 #define mADC128D818IsConversionRate(mode) ((mode == kADC128D818_ConversionRate_Continuous) || (mode == kADC128D818_ConversionRate_LowPower))
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Data types
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 typedef struct
 {
     uint8_t manufacturerID;
@@ -229,9 +229,9 @@ typedef struct
     uint16_t channel7data;
 } ADC128D818_t;
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Function prototypes
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 ///
 int ADC128D818Init(uint8_t inADCAddress);
 ///

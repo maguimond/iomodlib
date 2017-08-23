@@ -17,7 +17,7 @@
  */
 
 // App includes.
-#include "IOModule.h"
+#include "iomod.h"
 #include "boardConfig.h"
 
 // Drivers includes.
@@ -34,4 +34,4 @@
 #define mIOModuleValidateArg(arg) if (arg) { (void)0; } else { IOModuleSetMasterStatusFlag(kMasterStatusFlags_InvalidArg); return -1; }
 #define mIOModuleValidateStatus(returnStatus) if (returnStatus != kSuccess) { return returnStatus; }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------

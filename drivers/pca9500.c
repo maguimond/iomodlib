@@ -29,18 +29,18 @@
 #include "utils.h"
 #include "error.h"
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Private variables.
 static PCA9500_t gPCA9500[kPCA9500_MaxAddresses];
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PCA9500Init(void)
 {
     // Setup I2C1 driver.
     I2C1Setup();
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int PCA9500IOExpanderSetIO(uint8_t inSlaveAddress, uint8_t inIOPin, uint8_t inState)
 {
     mAssertParam(inSlaveAddress >= kPCA9500_SlaveAddress1 && inSlaveAddress < kPCA9500_MaxAddresses);
@@ -57,7 +57,7 @@ int PCA9500IOExpanderSetIO(uint8_t inSlaveAddress, uint8_t inIOPin, uint8_t inSt
     return I2C1Write(kPCA9500_IOExpanderBaseAddress | inSlaveAddress, &(gPCA9500[inSlaveAddress].portState), 1);
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int PCA9500IOExpanderGetIO(uint8_t inSlaveAddress, uint8_t inIOPin, uint8_t* outState)
 {
     mAssertParam(inSlaveAddress >= kPCA9500_SlaveAddress1 && inSlaveAddress < kPCA9500_MaxAddresses);
@@ -76,7 +76,7 @@ int PCA9500IOExpanderGetIO(uint8_t inSlaveAddress, uint8_t inIOPin, uint8_t* out
     return status;
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int PCA9500IOExpanderSetPort(uint8_t inSlaveAddress, uint8_t inPortData)
 {
     mAssertParam(inSlaveAddress >= kPCA9500_SlaveAddress1 && inSlaveAddress < kPCA9500_MaxAddresses);
@@ -86,7 +86,7 @@ int PCA9500IOExpanderSetPort(uint8_t inSlaveAddress, uint8_t inPortData)
     return I2C1Write(kPCA9500_IOExpanderBaseAddress | inSlaveAddress, &(gPCA9500[inSlaveAddress].portState), 1);
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int PCA9500IOExpanderGetPort(uint8_t inSlaveAddress, uint8_t* outPortData)
 {
     mAssertParam(inSlaveAddress >= kPCA9500_SlaveAddress1 && inSlaveAddress < kPCA9500_MaxAddresses);
@@ -94,7 +94,7 @@ int PCA9500IOExpanderGetPort(uint8_t inSlaveAddress, uint8_t* outPortData)
     return I2C1Read(kPCA9500_IOExpanderBaseAddress | inSlaveAddress, outPortData, 1);
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int PCA9500EEPROMPageWrite(uint8_t inSlaveAddress, uint8_t inMemoryAddress, uint8_t* inData, uint8_t inSize)
 {
     mAssertParam(inSlaveAddress >= kPCA9500_SlaveAddress1 && inSlaveAddress < kPCA9500_MaxAddresses);
@@ -108,7 +108,7 @@ int PCA9500EEPROMPageWrite(uint8_t inSlaveAddress, uint8_t inMemoryAddress, uint
     return I2C1Write(kPCA9500_EEPROMBaseAddress | inSlaveAddress, i2cData, inSize + 1);
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int PCA9500EEPROMPageRead(uint8_t inSlaveAddress, uint8_t inMemoryAddress, uint8_t* outData, uint8_t inSize)
 {
     mAssertParam(inSlaveAddress >= kPCA9500_SlaveAddress1 && inSlaveAddress < kPCA9500_MaxAddresses);

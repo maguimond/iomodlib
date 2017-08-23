@@ -29,14 +29,14 @@
 #include "utils.h"
 #include "error.h"
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Private variables.
 static ADC128D818_t gADC128D818[kADC128D818_MaxAddresses];
 
 // Private constants.
 #define kADCBusyTimeout 0x0010
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 static bool ADC128D818IsBusy(uint8_t inADCAddress, uint8_t inBusyFlag)
 {
     bool isBusy = true;
@@ -65,7 +65,7 @@ static bool ADC128D818IsBusy(uint8_t inADCAddress, uint8_t inBusyFlag)
     return isBusy;
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int ADC128D818Init(uint8_t inADCAddress)
 {
     // TODO: Power on the device, then wait for at least 33ms.
@@ -129,7 +129,7 @@ int ADC128D818Init(uint8_t inADCAddress)
     return status;
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int ADC128D818StartConversion(uint8_t inADCAddress, uint8_t inMode)
 {
     mAssertParam(mADC128D818IsConversionRate(inMode));
@@ -146,7 +146,7 @@ int ADC128D818StartConversion(uint8_t inADCAddress, uint8_t inMode)
     return status;
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int ADC128D818StopConversion(uint8_t inADCAddress)
 {
     // Disable monitoring operations.
@@ -157,7 +157,7 @@ int ADC128D818StopConversion(uint8_t inADCAddress)
     return status;
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int ADC128D818SingleConversion(uint8_t inADCAddress)
 {
     uint8_t i2cData = kADC128D818_RegisterOneShot_OneShot;
@@ -167,7 +167,7 @@ int ADC128D818SingleConversion(uint8_t inADCAddress)
     return status;
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int ADC128D818DeepShutdown(uint8_t inADCAddress, uint8_t inShutdownMode)
 {
     mAssertParam(mADC128D818IsDeepShutdown(inShutdownMode));
@@ -177,7 +177,7 @@ int ADC128D818DeepShutdown(uint8_t inADCAddress, uint8_t inShutdownMode)
     return status;
 }
 
-// --------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 uint16_t ADC128D818ReadChannel(uint8_t inADCAddress, uint8_t inChannel)
 {
     // Add channel address base.
