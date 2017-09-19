@@ -25,6 +25,8 @@
 
 // Private defines.
 
+// Checkout http://embedded-lab.com/blog/measurement-of-temperature-and-relative-humidity-using-dht11-sensor-and-pic-microcontroller/
+
 // ----------------------------------------------------------------------------
 static int (void)
 {
