@@ -4,7 +4,7 @@
 // Copyright (C) 2015 GRR Systems <marc-andre.guimond@grr-systems.com>.
 // All rights reserved.
 //
-// This fille is encoded in UTF-8.
+// This file is encoded in UTF-8.
 // ---------------------------------------------------------------------------
 
 // Standard includes.
