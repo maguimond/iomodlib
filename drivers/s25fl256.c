@@ -25,16 +25,19 @@
 // Drivers includes.
 #include "spi.h"
 
-// Common includes.
-#include "utils.h"
-#include "error.h"
+// Lib includes.
+#include "uprint.h" // TODO: remove prints, its a lib.
+#include "boardconfigerror.h"
 
 // ----------------------------------------------------------------------------
 // Private variables.
 static S25FL256_t gS25FL256;
 
-// Private defines.
+// Private constants.
 #define kS25FL256Timeout 0x10000
+
+// Private macros.
+#define mValidateParam(inParam) if (!inParam) { return -1; }
 
 // ----------------------------------------------------------------------------
 static int S25FL256ReadInfo(void)
@@ -42,7 +45,7 @@ static int S25FL256ReadInfo(void)
     uint8_t spiData[6] = { 0 };
 
     int status = SPI3ReadRegister(kS25FL256_RegisterRDID, spiData, 6);
-    if (status == kSuccess)
+    if (status == 0)
     {
         gS25FL256.manufacturerID = spiData[S25FL256_RegisterRDID_ManufacturerID];
         gS25FL256.memoryType = spiData[S25FL256_RegisterRDID_MemoryType];
@@ -78,9 +81,9 @@ int S25FL256BusyWait(void)
 {
     uint8_t spiData = 0;
     int status = SPI3ReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1);
-    if (status != kSuccess)
+    if (status != 0)
     {
-        PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status));
+        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
     }
     else
     {
@@ -95,9 +98,9 @@ int S25FL256BusyWait(void)
                 break;
             }
 
-            if (status != kSuccess)
+            if (status != 0)
             {
-                PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status));
+                PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
                 break;
             }
         }
@@ -111,9 +114,9 @@ static int S25FL256CheckStatus(uint8_t inStatusFlag)
 {
     uint8_t spiData = 0;
     int status = SPI3ReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1);
-    if (status != kSuccess)
+    if (status != 0)
     {
-        PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status));
+        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
     }
     else
     {
@@ -151,9 +154,9 @@ static int S25FL256CheckStatus(uint8_t inStatusFlag)
                 status = kError_FlashBusy;
             }
 
-            if (status != kSuccess)
+            if (status != 0)
             {
-                PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status));
+                PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
                 break;
             }
 
@@ -169,9 +172,9 @@ static int S25FL256WriteEnable(void)
 {
     uint8_t data;
     int status = SPI3WriteRegister(kS25FL256_RegisterWREN, &data, 0, kSPIPacketIsComplete);
-    if (status != kSuccess)
+    if (status != 0)
     {
-        PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status));
+        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
     }
 
     return status;
@@ -184,13 +187,26 @@ int S25FL256Init(void)
     SPI3Setup();
 
     int status = S25FL256BusyWait();
-    if (status == kSuccess)
+    if (status == 0)
     {
         // Read device info.
         status = S25FL256ReadInfo();
-        if (status == kSuccess)
+        if (status == 0)
         {
-            PrintMessage("%s : %s - Info: S25FL device info...\nManufacturer ID: 0x%x\nMemory type: 0x%x\nCapacity: 0x%x\nID-CFI length: 0x%x\nSector architecture: 0x%x\nFamily ID: 0x%x\n", __FILENAME__, __FUNCTION__, gS25FL256.manufacturerID, gS25FL256.memoryType, gS25FL256.capacity, gS25FL256.IDCFI, gS25FL256.sectorArchitecture, gS25FL256.familyID);
+            PrintMessage("%s - Info: S25FL device info...\n"
+                         "Manufacturer ID: 0x%x\n"
+                         "Memory type: 0x%x\n"
+                         "Capacity: 0x%x\n"
+                         "ID-CFI length: 0x%x\n"
+                         "Sector architecture: 0x%x\n"
+                         "Family ID: 0x%x\n",
+                         __FUNCTION__,
+                         gS25FL256.manufacturerID,
+                         gS25FL256.memoryType,
+                         gS25FL256.capacity,
+                         gS25FL256.IDCFI,
+                         gS25FL256.sectorArchitecture,
+                         gS25FL256.familyID);
         }
     }
 
@@ -200,7 +216,7 @@ int S25FL256Init(void)
 // ----------------------------------------------------------------------------
 int S25FL256Erase4K(uint32_t inSectorAddress)
 {
-    mAssertParam(inSectorAddress >= 0 && inSectorAddress <= kS25FL256_4KSectorLast);
+    mValidateParam(inSectorAddress >= 0 && inSectorAddress <= kS25FL256_4KSectorLast);
 
     int status = S25FL256WriteEnable();
     status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
@@ -238,7 +254,7 @@ int S25FL256PageWrite(uint32_t inSectorAddress, uint8_t* inData, uint32_t inSize
 {
     // FIXME: S25FL256CheckStatus does not do the job.
     S25FL256BusyWait();
-    int status = kSuccess;
+    int status = 0;
     if (inSize <= gS25FL256.pageSize)
     {
         uint8_t sectorAddress[4] = { 0 };
@@ -252,20 +268,20 @@ int S25FL256PageWrite(uint32_t inSectorAddress, uint8_t* inData, uint32_t inSize
 
         // Send address.
         status = SPI3WriteRegister(kS25FL256_Register4PP, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete);
-        if (status != kSuccess)
+        if (status != 0)
         {
             return status;
         }
         // Send data.
         status = SPI3WriteRegister(kS25FL256_Register4PP, inData, inSize, kSPIPacketIsComplete);
-        if (status != kSuccess)
+        if (status != 0)
         {
             return status;
         }
     }
     else
     {
-        PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, "Out of boundaries");
+        PrintMessage("%s - Error: %s\n", __FUNCTION__, "Out of boundaries");
     }
 
     return status;
@@ -283,15 +299,15 @@ int S25FL256PageRead(uint32_t inSectorAddress, uint8_t* outData, uint32_t inSize
     S25FL256BusyWait();
     // Send address.
     int status = SPI3WriteRegister(kS25FL256_Register4READ, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete);
-    if (status != kSuccess)
+    if (status != 0)
     {
-        PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status));
+        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
     }
 
     status = SPI3ReadRegister(kS25FL256_Register4READ, outData, inSize);
-    if (status != kSuccess)
+    if (status != 0)
     {
-        PrintMessage("%s : %s - Error: %s\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status));
+        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
     }
 
     return status;

@@ -243,7 +243,7 @@ int ADC128D818SingleConversion(uint8_t inADCAddress);
 ///
 int ADC128D818DeepShutdown(uint8_t inADCAddress, uint8_t inShutdownMode);
 ///
-uint16_t ADC128D818ReadChannel(uint8_t inADCAddress, uint8_t inChannel);
+int ADC128D818ReadChannel(uint8_t inADCAddress, uint8_t inChannel, uint16_t* outADCData);
 
 #ifdef __cplusplus
 }

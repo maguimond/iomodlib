@@ -4,7 +4,7 @@
 // Copyright (C) 2015 GRR Systems <marc-andre.guimond@grr-systems.com>.
 // All rights reserved.
 //
-// This fille is encoded in UTF-8.
+// This file is encoded in UTF-8.
 // ---------------------------------------------------------------------------
 
 // Standard includes.
@@ -17,11 +17,9 @@
 #include "fsmc.h"
 #include "gpio.h"
 
-// Common includes.
-#include "utils.h"
-
-// libgfx includes.
+// Lib includes.
 #include "fonts.c"
+#include "utils.h"
 
 // ----------------------------------------------------------------------------
 #define MAX_POLY_CORNERS 200

@@ -24,10 +24,7 @@
 
 // Drivers includes.
 #include "i2c.h"
-
-// Common includes.
 #include "utils.h"
-#include "error.h"
 
 // ----------------------------------------------------------------------------
 // Private variables.
@@ -36,6 +33,9 @@ static ADC128D818_t gADC128D818[kADC128D818_MaxAddresses];
 // Private constants.
 #define kADCBusyTimeout 0x0010
 
+// Private macros.
+#define mValidateParam(inParam) if (!inParam) { return -1; }
+
 // ----------------------------------------------------------------------------
 static bool ADC128D818IsBusy(uint8_t inADCAddress, uint8_t inBusyFlag)
 {
@@ -43,9 +43,9 @@ static bool ADC128D818IsBusy(uint8_t inADCAddress, uint8_t inBusyFlag)
     uint8_t i2cData = 0;
 
     int status = I2C1ReadRegister(inADCAddress, kADC128D818_RegisterBusyStatus, &i2cData, 1);
-    if (status != kSuccess)
+    if (status != 0)
     {
-        PrintMessage("%s : %s - Error: %s (ADC[0x%x])\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status), inADCAddress);
+        return true;
     }
     else
     {
@@ -83,20 +83,20 @@ int ADC128D818Init(uint8_t inADCAddress)
     {
         if ((-- timeout) == 0)
         {
-            PrintMessage("%s : %s - Error: %s (ADC[0x%x])\n", __FILENAME__, __FUNCTION__, "I2C ADC busy", inADCAddress);
+            return -1;
         }
     }
 
     // Read manufacturing data.
     int status = I2C1ReadRegister(inADCAddress, kADC128D818_RegisterManufacturerID, &(gADC128D818[0].manufacturerID), 1);
-    if (status != kSuccess)
+    if (status != 0)
     {
         return status;
     }
 
     // Read revision data.
     status = I2C1ReadRegister(inADCAddress, kADC128D818_RegisterRevisionID, &(gADC128D818[0].revisionID), 1);
-    if (status != kSuccess)
+    if (status != 0)
     {
         return status;
     }
@@ -120,7 +120,7 @@ int ADC128D818Init(uint8_t inADCAddress)
         uint8_t registerAddress = gADC128D818RegisterConfigTable[registerIdx ++];
         uint8_t registerValue = gADC128D818RegisterConfigTable[registerIdx];
         status = I2C1WriteRegister(inADCAddress, registerAddress, &registerValue, 1);
-        if (status != kSuccess)
+        if (status != 0)
         {
             break;
         }
@@ -132,7 +132,7 @@ int ADC128D818Init(uint8_t inADCAddress)
 // ----------------------------------------------------------------------------
 int ADC128D818StartConversion(uint8_t inADCAddress, uint8_t inMode)
 {
-    mAssertParam(mADC128D818IsConversionRate(inMode));
+    mValidateParam(mADC128D818IsConversionRate(inMode));
 
     // Select conversion mode.
     uint8_t i2cData = inMode;
@@ -170,7 +170,7 @@ int ADC128D818SingleConversion(uint8_t inADCAddress)
 // ----------------------------------------------------------------------------
 int ADC128D818DeepShutdown(uint8_t inADCAddress, uint8_t inShutdownMode)
 {
-    mAssertParam(mADC128D818IsDeepShutdown(inShutdownMode));
+    mValidateParam(mADC128D818IsDeepShutdown(inShutdownMode));
 
     int status = I2C1WriteRegister(inADCAddress, kADC128D818_RegisterDeepShutdown, &inShutdownMode, 1);
 
@@ -178,23 +178,21 @@ int ADC128D818DeepShutdown(uint8_t inADCAddress, uint8_t inShutdownMode)
 }
 
 // ----------------------------------------------------------------------------
-uint16_t ADC128D818ReadChannel(uint8_t inADCAddress, uint8_t inChannel)
+int ADC128D818ReadChannel(uint8_t inADCAddress, uint8_t inChannel, uint16_t* outADCData)
 {
     // Add channel address base.
     inChannel |= kADC128D818_RegisterChannel0Read;
 
-    mAssertParam(mADC128D818IsChannelReadings(inChannel));
+    mValidateParam(mADC128D818IsChannelReadings(inChannel));
 
     uint8_t i2cData = 0;
     uint8_t* i2cDataPointer = &i2cData;
     int status = I2C1ReadRegister(inADCAddress, inChannel, i2cDataPointer, 2);
-    if (status != kSuccess)
-    {
-        PrintMessage("%s : %s - Error: %s (ADC[0x%x])\n", __FILENAME__, __FUNCTION__, ParseErrorMessage(status), inADCAddress);
-    }
 
     uint16_t adcDataBuffer = *(uint16_t*)(i2cDataPointer);
 
     // ADC returns LSByte first [16..4]. Convert to MSByte first with result [12..0]
-    return (mHTONS(adcDataBuffer)) >> 4;
+    *outADCData = mHTONS(adcDataBuffer) >> 4;
+
+    return status;
 }
