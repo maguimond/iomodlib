@@ -32,6 +32,7 @@
 // ----------------------------------------------------------------------------
 // Private variables.
 static S25FL256_t gS25FL256;
+static bool gIsMasterConfigDriverInitialized;
 
 // Private constants.
 #define kS25FL256Timeout 0x10000
@@ -183,49 +184,56 @@ static int S25FL256WriteEnable(void)
 // ----------------------------------------------------------------------------
 int S25FL256Init(void)
 {
-    // Setup SPI3 driver.
-    SPI3Setup();
+    int status = 0;
 
-    int status = S25FL256BusyWait();
-    if (status == 0)
+    if (!gIsMasterConfigDriverInitialized)
     {
-        // Read device info.
-        status = S25FL256ReadInfo();
+        // Setup SPI3 driver.
+        SPI3Setup();
+
+        status = S25FL256BusyWait();
         if (status == 0)
         {
-            PrintMessage("%s - Info: S25FL device info...\n"
-                         "Manufacturer ID: 0x%x\n"
-                         "Memory type: 0x%x\n"
-                         "Capacity: 0x%x\n"
-                         "ID-CFI length: 0x%x\n"
-                         "Sector architecture: 0x%x\n"
-                         "Family ID: 0x%x\n",
-                         __FUNCTION__,
-                         gS25FL256.manufacturerID,
-                         gS25FL256.memoryType,
-                         gS25FL256.capacity,
-                         gS25FL256.IDCFI,
-                         gS25FL256.sectorArchitecture,
-                         gS25FL256.familyID);
+            // Read device info.
+            status = S25FL256ReadInfo();
+            if (status == 0)
+            {
+                PrintMessage("%s - Info: S25FL device info...\n"
+                             "Manufacturer ID: 0x%x\n"
+                             "Memory type: 0x%x\n"
+                             "Capacity: 0x%x\n"
+                             "ID-CFI length: 0x%x\n"
+                             "Sector architecture: 0x%x\n"
+                             "Family ID: 0x%x\n",
+                             __FUNCTION__,
+                             gS25FL256.manufacturerID,
+                             gS25FL256.memoryType,
+                             gS25FL256.capacity,
+                             gS25FL256.IDCFI,
+                             gS25FL256.sectorArchitecture,
+                             gS25FL256.familyID);
+            }
         }
     }
+
+    gIsMasterConfigDriverInitialized = true;
 
     return status;
 }
 
 // ----------------------------------------------------------------------------
-int S25FL256Erase4K(uint32_t inSectorAddress)
+int S25FL256Erase4K(uint32_t inAddress)
 {
-    mValidateParam(inSectorAddress >= 0 && inSectorAddress <= kS25FL256_4KSectorLast);
+    mValidateParam(inAddress >= 0 && inAddress <= kS25FL256_4KSectorLast);
 
     int status = S25FL256WriteEnable();
     status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
 
     uint8_t sectorAddress[4] = { 0 };
-    sectorAddress[0] = inSectorAddress >> 24;
-    sectorAddress[1] = inSectorAddress >> 16;
-    sectorAddress[2] = inSectorAddress >> 8;
-    sectorAddress[3] = inSectorAddress & 0xFF;
+    sectorAddress[0] = inAddress >> 24;
+    sectorAddress[1] = inAddress >> 16;
+    sectorAddress[2] = inAddress >> 8;
+    sectorAddress[3] = inAddress & 0xFF;
 
     status = SPI3WriteRegister(kS25FL256_Register4P4E, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete);
 
@@ -233,16 +241,16 @@ int S25FL256Erase4K(uint32_t inSectorAddress)
 }
 
 // ----------------------------------------------------------------------------
-int S25FL256Erase64K(uint32_t inSectorAddress)
+int S25FL256Erase64K(uint32_t inAddress)
 {
     int status = S25FL256WriteEnable();
     status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
 
     uint8_t sectorAddress[4] = { 0 };
-    sectorAddress[0] = inSectorAddress >> 24;
-    sectorAddress[1] = inSectorAddress >> 16;
-    sectorAddress[2] = inSectorAddress >> 8;
-    sectorAddress[3] = inSectorAddress & 0xFF;
+    sectorAddress[0] = inAddress >> 24;
+    sectorAddress[1] = inAddress >> 16;
+    sectorAddress[2] = inAddress >> 8;
+    sectorAddress[3] = inAddress & 0xFF;
 
     status = SPI3WriteRegister(kS25FL256_Register4SE, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete);
 
@@ -250,7 +258,7 @@ int S25FL256Erase64K(uint32_t inSectorAddress)
 }
 
 // ----------------------------------------------------------------------------
-int S25FL256PageWrite(uint32_t inSectorAddress, uint8_t* inData, uint32_t inSize)
+int S25FL256PageWrite(uint32_t inAddress, uint8_t* inData, uint32_t inSize)
 {
     // FIXME: S25FL256CheckStatus does not do the job.
     S25FL256BusyWait();
@@ -258,10 +266,10 @@ int S25FL256PageWrite(uint32_t inSectorAddress, uint8_t* inData, uint32_t inSize
     if (inSize <= gS25FL256.pageSize)
     {
         uint8_t sectorAddress[4] = { 0 };
-        sectorAddress[0] = inSectorAddress >> 24;
-        sectorAddress[1] = inSectorAddress >> 16;
-        sectorAddress[2] = inSectorAddress >> 8;
-        sectorAddress[3] = inSectorAddress & 0xFF;
+        sectorAddress[0] = inAddress >> 24;
+        sectorAddress[1] = inAddress >> 16;
+        sectorAddress[2] = inAddress >> 8;
+        sectorAddress[3] = inAddress & 0xFF;
 
         status = S25FL256WriteEnable();
         status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
@@ -288,13 +296,13 @@ int S25FL256PageWrite(uint32_t inSectorAddress, uint8_t* inData, uint32_t inSize
 }
 
 // ----------------------------------------------------------------------------
-int S25FL256PageRead(uint32_t inSectorAddress, uint8_t* outData, uint32_t inSize)
+int S25FL256PageRead(uint32_t inAddress, uint8_t* outData, uint32_t inSize)
 {
     uint8_t sectorAddress[4] = { 0 };
-    sectorAddress[0] = inSectorAddress >> 24;
-    sectorAddress[1] = inSectorAddress >> 16;
-    sectorAddress[2] = inSectorAddress >> 8;
-    sectorAddress[3] = inSectorAddress & 0xFF;
+    sectorAddress[0] = inAddress >> 24;
+    sectorAddress[1] = inAddress >> 16;
+    sectorAddress[2] = inAddress >> 8;
+    sectorAddress[3] = inAddress & 0xFF;
 
     S25FL256BusyWait();
     // Send address.

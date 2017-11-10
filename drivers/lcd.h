@@ -257,12 +257,6 @@ typedef enum
 // ----------------------------------------------------------------------------
 typedef struct
 {
-    int16_t x;
-    int16_t y;
-} Point, * pPoint;
-
-typedef struct
-{
     uint16_t driver;
     uint16_t width;
     uint16_t height;
@@ -276,11 +270,11 @@ typedef struct
 
 typedef struct
 {
-    uint16_t start_pos_x;
-    uint16_t start_pos_y;
-    uint16_t cursor_x;
-    uint16_t cursor_y;
-} text_box_t;
+    uint16_t startPosX;
+    uint16_t startPosY;
+    uint16_t cursorX;
+    uint16_t cursorY;
+} TextBox_t;
 
 // ----------------------------------------------------------------------------
 // Macros

@@ -32,7 +32,7 @@
 
 // Private variables.
 static lcd_t lcd;
-static text_box_t text_box;
+static TextBox_t gTextBox;
 
 static const uint16_t ILI9325_reg_table[] =
 {
@@ -399,7 +399,7 @@ uint16_t LCDSetup(void)
 uint16_t LCDReadID(void)
 {
     uint16_t driver;
-    driver = LCDReadRegister(0x0000);
+    driver = LCDReadRegister(0x00D3);
     driver = LCDReadRAMData();
     return driver;
 }
@@ -659,19 +659,19 @@ fonts_t* LCDGetFont(void)
 void LCDPutChar(uint16_t x, uint16_t y, char c)
 {
     // Set coordinates
-    text_box.cursor_x = x;
-    text_box.cursor_y = y;
+    gTextBox.cursorX = x;
+    gTextBox.cursorY = y;
 
-    if ((text_box.cursor_y + lcd.font->height) > lcd.height)
+    if ((gTextBox.cursorY + lcd.font->height) > lcd.height)
     {   // If at bottom of display, go to start position
-        text_box.cursor_x = text_box.start_pos_x;
-        text_box.cursor_y = text_box.start_pos_y;
+        gTextBox.cursorX = gTextBox.startPosX;
+        gTextBox.cursorY = gTextBox.startPosY;
         LCDClearScreen();
     }
 
     uint8_t h_idx;
     uint16_t char_line = 0;
-    LCDSetCursor(text_box.cursor_x, text_box.cursor_y);
+    LCDSetCursor(gTextBox.cursorX, gTextBox.cursorY);
     for (h_idx = 0; h_idx < lcd.font->height; h_idx ++)
     {
         uint16_t char_row_mask = lcd.font->table[(c - 32) * lcd.font->height + h_idx];
@@ -689,42 +689,42 @@ void LCDPutChar(uint16_t x, uint16_t y, char c)
             }
         }
         char_line ++;
-        LCDSetCursor(text_box.cursor_x, text_box.cursor_y + char_line);
+        LCDSetCursor(gTextBox.cursorX, gTextBox.cursorY + char_line);
     }
 }
 
 // ----------------------------------------------------------------------------
-void LCDPutText(uint16_t col_offset, uint16_t line, const char* text_ptr)
+void LCDPutText(uint16_t col_offset, uint16_t line, const char* inTextPtr)
 {
-    text_box.cursor_x = col_offset;
-    text_box.cursor_y = line;
+    gTextBox.cursorX = col_offset;
+    gTextBox.cursorY = line;
 
     // Send the string character by character on lCD
-    while (*text_ptr != 0)
+    while (*inTextPtr != 0)
     {
-        if (*text_ptr == '\r')
+        if (*inTextPtr == '\r')
         {   // Return
-            text_box.cursor_x = text_box.start_pos_x;
-            text_ptr ++;
+            gTextBox.cursorX = gTextBox.startPosX;
+            inTextPtr ++;
             continue;
         }
-        else if (*text_ptr == '\n')
+        else if (*inTextPtr == '\n')
         {   // New line
-            text_box.cursor_y += lcd.font->height;
-            text_box.cursor_x = text_box.start_pos_x;
-            text_ptr ++;
+            gTextBox.cursorY += lcd.font->height;
+            gTextBox.cursorX = gTextBox.startPosX;
+            inTextPtr ++;
             continue;
         }
 
         if (lcd.textWrap == kLCDTextWrapping_Character)
         {
-            if ((text_box.cursor_x + lcd.font->width) > lcd.width)
+            if ((gTextBox.cursorX + lcd.font->width) > lcd.width)
             {   // Wrap on character screen width overflow
-                text_box.cursor_x = text_box.start_pos_x;
-                text_box.cursor_y += lcd.font->height;
-                if (*text_ptr == ' ')
+                gTextBox.cursorX = gTextBox.startPosX;
+                gTextBox.cursorY += lcd.font->height;
+                if (*inTextPtr == ' ')
                 {   // Skip overflow on space
-                    text_ptr ++;
+                    inTextPtr ++;
                     continue;
                 }
             }
@@ -733,39 +733,39 @@ void LCDPutText(uint16_t col_offset, uint16_t line, const char* text_ptr)
         {   // Wrap on word
             uint8_t str_char_nb;
             // Count characters in a word
-            for (str_char_nb = 1; (*(text_ptr + str_char_nb) != ' ') && (*(text_ptr + str_char_nb) != '\0') &&
-                                  (*(text_ptr + str_char_nb) != '\r') && (*(text_ptr + str_char_nb) != '\n'); str_char_nb ++);
+            for (str_char_nb = 1; (*(inTextPtr + str_char_nb) != ' ') && (*(inTextPtr + str_char_nb) != '\0') &&
+                                  (*(inTextPtr + str_char_nb) != '\r') && (*(inTextPtr + str_char_nb) != '\n'); str_char_nb ++);
 
-            if (text_box.cursor_x + str_char_nb * lcd.font->width > lcd.width)
+            if (gTextBox.cursorX + str_char_nb * lcd.font->width > lcd.width)
             {   // Wrap on word screen width overflow
-                text_box.cursor_x = text_box.start_pos_x;
-                text_box.cursor_y += lcd.font->height;
-                if (*text_ptr == ' ')
+                gTextBox.cursorX = gTextBox.startPosX;
+                gTextBox.cursorY += lcd.font->height;
+                if (*inTextPtr == ' ')
                 {   // Skip new line starting with space
-                    text_ptr ++;
+                    inTextPtr ++;
                     continue;
                 }
             }
         }
 
         // Display one character on LCD and point to next character
-        LCDPutChar(text_box.cursor_x, text_box.cursor_y, *text_ptr++);
+        LCDPutChar(gTextBox.cursorX, gTextBox.cursorY, *inTextPtr ++);
         // Increment horizontal position for next character
-        text_box.cursor_x += lcd.font->width;
+        gTextBox.cursorX += lcd.font->width;
     }
 }
 
 // ----------------------------------------------------------------------------
-void LCDAppendText(char* text_ptr)
+void LCDAppendText(char* inTextPtr)
 {
-    LCDPutText(text_box.cursor_x, text_box.cursor_y, text_ptr);
+    LCDPutText(gTextBox.cursorX, gTextBox.cursorY, inTextPtr);
 }
 
 // ----------------------------------------------------------------------------
 void LCDSetTextStartPosition(uint16_t col_offset, uint16_t line)
 {
-    text_box.start_pos_x = text_box.cursor_x = col_offset;
-    text_box.start_pos_y = text_box.cursor_y = line;
+    gTextBox.startPosX = gTextBox.cursorX = col_offset;
+    gTextBox.startPosY = gTextBox.cursorY = line;
 }
 
 // ----------------------------------------------------------------------------

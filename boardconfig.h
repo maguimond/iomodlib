@@ -22,14 +22,17 @@
 // Standard includes.
 #include <stdint.h>
 
+// User config.
+#include "boardconfiguser.h"
+
 // ----------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------
-#define kBoardConfigMagicNumber 0xDEAD
-#define kMasterConfig_Size (kMasterConfig_CRC - kMasterConfig_Magic)
-#define kMasterConfig_WriteQueueLenght 4
-#define kSlaveConfig_Size (kSlaveConfig_CRC - kSlaveConfig_Magic)
-#define kSlaveConfig_WriteQueueLenght 4
+#define kBoardConfig_MagicNumber 0xDEAD
+#define kBoardConfig_MasterUserSize (kMasterConfig_CRC - kMasterConfig_Magic)
+#define kBoardConfig_MasterWriteQueueLenght 4
+#define kBoardConfig_SlaveUserSize (kSlaveConfig_CRC - kSlaveConfig_Magic)
+#define kBoardConfig_SlaveWriteQueueLenght 4
 
 typedef enum
 {

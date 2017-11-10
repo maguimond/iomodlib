@@ -34,7 +34,6 @@
 // Lib includes.
 #include "boardconfig.h"
 #include "boardconfigerror.h"
-#include "boardconfiguser.h"
 #include "flashconfig.h"
 #include "uprint.h"
 #include "utils.h"
@@ -47,9 +46,9 @@
 // Private constants.
 // Map drivers constants.
 #define kMasterPageSize kS25FL256_PageSize256B
-#define kMasterMemorySize kS25FL256_PageSize256B //kS25FL256_4KSectorSize
+#define kMasterConfigTotalSize kMasterConfig_End
 #define kSlavePageSize kPCA9500_EEPROMPageSize
-#define kSlaveMemorySize kPCA9500_EEPROMTotSize
+#define kSlaveConfigTotalSize kPCA9500_EEPROMTotSize
 
 // Private variables.
 static bool gIsBoardConfigInitDone = false;
@@ -58,8 +57,8 @@ static xSemaphoreHandle gBoardConfigMutex;
 static uint16_t masterPageSize;
 
 // Shadow RAM.
-static uint8_t gMasterConfigShadowRAM[kMasterMemorySize];
-static uint8_t gSlaveConfigShadowRAM[SlaveID_Max][kSlaveMemorySize];
+static uint8_t gMasterConfigShadowRAM[kMasterConfigTotalSize];
+static uint8_t gSlaveConfigShadowRAM[SlaveID_Max][kSlaveConfigTotalSize];
 
 // Private structs.
 typedef struct
@@ -67,7 +66,7 @@ typedef struct
     uint8_t boardID;
     uint8_t address;
     uint8_t size;
-    uint8_t data[kSlavePageSize];
+    uint8_t data[8];
     uint16_t crc;
 } boardWriteMessage_t;
 
@@ -81,7 +80,7 @@ static void MasterConfigSave(void)
     uint16_t crc;
     // TODO: REMOVE, use config tool
 
-    crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kMasterConfig_Size);
+    crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kBoardConfig_MasterUserSize);
     *((uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_CRC)) = mHTONS(crc);
 
     S25FL256Erase64K(kMasterConfig_Magic);
@@ -90,7 +89,7 @@ static void MasterConfigSave(void)
 
     int status;
     // Write everything to non-volatile memory.
-    status = S25FL256PageWrite(kMasterConfig_Magic, gMasterConfigShadowRAM + kMasterConfig_Magic, kMasterConfig_End - kMasterConfig_Magic);
+    status = S25FL256PageWrite(kMasterConfig_Magic, gMasterConfigShadowRAM + kMasterConfig_Magic, kMasterConfigTotalSize);
     if (status != 0)
     {
         PrintMessage("%s - Error: %s (master)\n", __FUNCTION__, ParseErrorMessage(status));
@@ -103,7 +102,7 @@ static void SlaveConfigSave(uint8_t inSlaveID)
     uint16_t crc;
 
     // Compute CRC.
-    crc = CRC16ComputeCRC((uint8_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic), kSlaveConfig_Size);
+    crc = CRC16ComputeCRC((uint8_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic), kBoardConfig_SlaveUserSize);
     *((uint16_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_CRC)) = mHTONS(crc);
 
     int status;
@@ -120,7 +119,6 @@ static void SlaveConfigSave(uint8_t inSlaveID)
 }
 
 // ----------------------------------------------------------------------------
-// WARNING: does not acquire config mutex.
 int MasterConfigInit(uint8_t inSlaveCount)
 {
     // Setup HAL.
@@ -133,7 +131,7 @@ int MasterConfigInit(uint8_t inSlaveCount)
 
     // Read non-volatile memory in Shadow RAM.
     masterPageSize = S25FL256GetPageSize();
-    for (uint32_t addressIdx = 0; addressIdx < kMasterMemorySize; addressIdx += masterPageSize)
+    for (uint32_t addressIdx = kPartition_1_FirstSector; addressIdx < kMasterConfigTotalSize; addressIdx += masterPageSize)
     {
         status = S25FL256PageRead(addressIdx, gMasterConfigShadowRAM + addressIdx, masterPageSize);
         if (status != 0)
@@ -142,11 +140,11 @@ int MasterConfigInit(uint8_t inSlaveCount)
         }
     }
 
-    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kMasterConfig_Size);
+    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kBoardConfig_MasterUserSize);
     bool isConfigValid = false;
 
     // Validate config.
-    if (*(uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic) != mHTONS(kBoardConfigMagicNumber))
+    if (*(uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic) != mHTONS(kBoardConfig_MagicNumber))
     {
         PrintMessage("%s - Warning: %s\n", __FUNCTION__, "Bad magic");
         isConfigValid = false;
@@ -186,7 +184,7 @@ int MasterConfigInit(uint8_t inSlaveCount)
         return -1;
     }
 
-    if ((BoardConfigWriteQueue = xQueueCreate(kMasterConfig_WriteQueueLenght, sizeof(boardWriteMessage_t))) == NULL)
+    if ((BoardConfigWriteQueue = xQueueCreate(kBoardConfig_MasterWriteQueueLenght, sizeof(boardWriteMessage_t))) == NULL)
     {
         PrintMessage("%s - Error: %s\n", __FUNCTION__, "Can't create BoardConfigWriteQueue");
         return -1;
@@ -244,12 +242,11 @@ uint8_t SlaveDiscovery(uint8_t* outSlaveAddressMap)
 }
 
 // ----------------------------------------------------------------------------
-// WARNING: does not acquire EEPROM mutex.
 int SlaveConfigInit(uint8_t inSlaveID)
 {
     int status = 0;
     // Read non-volatile memory in Shadow RAM.
-    for (uint16_t addressIdx = 0; addressIdx < kSlaveMemorySize; addressIdx += kSlavePageSize)
+    for (uint16_t addressIdx = 0; addressIdx < kSlaveConfigTotalSize; addressIdx += kSlavePageSize)
     {
         status = PCA9500EEPROMPageRead(inSlaveID, (uint8_t)addressIdx, gSlaveConfigShadowRAM[inSlaveID] + addressIdx, kSlavePageSize);
         if (status != 0)
@@ -260,10 +257,10 @@ int SlaveConfigInit(uint8_t inSlaveID)
     }
 
     // Validate settings.
-    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic), kSlaveConfig_Size);
+    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic), kBoardConfig_SlaveUserSize);
     bool isConfigValid = false;
 
-    if (*(uint16_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic) != mHTONS(kBoardConfigMagicNumber))
+    if (*(uint16_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic) != mHTONS(kBoardConfig_MagicNumber))
     {
         PrintMessage("%s - Warning: %s (slave ID %d)\n", __FUNCTION__, "Wrong magic value", inSlaveID + 1);
         isConfigValid = false;
@@ -313,9 +310,9 @@ void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
         PrintMessage("%s - Error: %s\n", __FUNCTION__, "Bad page size");
         return;
     }
-    if ((inAddress < kMasterConfig_IPAddr) || (inAddress >= kMasterConfig_End))
+    if ((inAddress < kMasterConfig_IPAddr) || (inAddress >= kMasterConfigTotalSize))
     {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, "Can't write outside CFG_U section");
+        PrintMessage("%s - Error: %s\n", __FUNCTION__, "Can't write outside config section");
         return;
     }
     if (((inAddress / kMasterPageSize) != ((inAddress + inSize) / kMasterPageSize)) && ((inAddress + inSize) % kMasterPageSize))
@@ -330,7 +327,7 @@ void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
     memcpy(gMasterConfigShadowRAM + inAddress, inData, inSize);
 
     // Recompute the CRC
-    crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kMasterConfig_Size);
+    crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kBoardConfig_MasterUserSize);
     *((uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_CRC)) = mHTONS(crc);
 
     // Send message to write task to commit changes to non-volatile memory.
@@ -365,7 +362,7 @@ void SlaveConfigWrite(uint8_t inSlaveID, uint8_t inAddress, uint8_t* inData, uin
     }
     if ((inAddress < kSlaveConfig_VersionMajor) || (inAddress >= kSlaveConfig_Reflash))
     {
-        PrintMessage("%s - Error: %s (slave ID %d)\n", __FUNCTION__, "Can't write outside CFG_U section", inSlaveID + 1);
+        PrintMessage("%s - Error: %s (slave ID %d)\n", __FUNCTION__, "Can't write outside config section", inSlaveID + 1);
         return;
     }
     if (((inAddress / kSlavePageSize) != ((inAddress + inSize) / kSlavePageSize)) && ((inAddress + inSize) % kSlavePageSize))
@@ -380,7 +377,7 @@ void SlaveConfigWrite(uint8_t inSlaveID, uint8_t inAddress, uint8_t* inData, uin
     memcpy(gSlaveConfigShadowRAM[inSlaveID] + inAddress, inData, inSize);
 
     // Recompute the CRC
-    crc = CRC16ComputeCRC((uint8_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic), kSlaveConfig_Size);
+    crc = CRC16ComputeCRC((uint8_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_Magic), kBoardConfig_SlaveUserSize);
     *((uint16_t*)(gSlaveConfigShadowRAM[inSlaveID] + kSlaveConfig_CRC)) = mHTONS(crc);
 
     // Send message to write task to commit changes to non-volatile memory.
@@ -470,41 +467,27 @@ void TaskBoardConfig(void* args)
         int status = 0;
         if (configMessage.boardID == MasterID)
         {
+#if kDebugEnabled == 1
             PrintMessage("%s - Info: Writing to master\n", __FUNCTION__);
-
-            /*// Store data to master.
-            status = S25FL256PageWrite(configMessage.address, configMessage.data, configMessage.size);
-            // Store new user CRC.
-            status |= S25FL256PageWrite(kMasterConfig_CRC, (uint8_t*)&configMessage.crc, 2);
-*/
-            //FIXME: REIMPLEMENT FOR MASTER (I.E. DO NOT ERASE EVERYTIME).
-
-        	//TODO: Serial read 4k sector
-/*        	status = S25FL256PageRead(); // compare shadow ram data with flash data
-        	if (status != 0)
-			{
-				PrintMessage("%s - Error: %s (master)\n", __FUNCTION__, ParseErrorMessage(status));
-			}
-
-        	if (memcmp(gMasterConfigShadowRAM,)) // if not the same, erase and rewrite flash partition
-        	{
-
-        	}
-*/
-            S25FL256Erase4K(kPartition_1_FirstSector + kMasterConfig_Magic);
-
-            // Wait until erase is done
+#endif
+            // Copy config to shadow RAM.
+            uint8_t masterConfigCache[kMasterConfigTotalSize] = { 0 };
+            status = S25FL256PageRead(kPartition_1_FirstSector, masterConfigCache, kMasterConfigTotalSize);
+            // Erase sector.
+            S25FL256Erase64K(kPartition_1_FirstSector);
+            // Wait until erase is done TODO: Move this into the erase function...
             do
             {
-            	status = S25FL256BusyWait();
+                status = S25FL256BusyWait();
             }
             while (status == kError_FlashBusy);
 
-            status = S25FL256PageWrite(kMasterConfig_Magic, gMasterConfigShadowRAM + kMasterConfig_Magic, kMasterConfig_End - kMasterConfig_Magic);
-            if (status != 0)
-            {
-                PrintMessage("%s - Error: %s (master)\n", __FUNCTION__, ParseErrorMessage(status));
-            }
+            // Write data cache.
+            memcpy(masterConfigCache + configMessage.address, configMessage.data, configMessage.size);
+            // Write CRC cache.
+            memcpy(masterConfigCache + kMasterConfig_CRC, (uint8_t*)&configMessage.crc, 2);
+            // Store config.
+            status |= S25FL256PageWrite(kPartition_1_FirstSector, masterConfigCache, kMasterConfigTotalSize);
         }
         else
         {

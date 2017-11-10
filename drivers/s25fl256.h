@@ -45,12 +45,7 @@ extern "C"
 #define kS25FL256_64KSectorFirst 0x00020000
 #define kS25FL256_64KSectorLast 0x01FFFFFF
 
-// -------------------------------------
-// Registers mapping.
-// -------------------------------------
-
-// Read Device Identification command set.
-// -------------------------------------
+/// Read Device Identification command set.
 
 // Read Electronic Manufacturer Signature.
 #define kS25FL256_RegisterREMS      0x90
@@ -66,19 +61,17 @@ typedef enum
     S25FL256_RegisterRDID_SectorArchitecture,
     S25FL256_RegisterRDID_FamilyID,
 } S25FL256_RegisterRDID_t;
+
 typedef enum
 {
     kS25FL256_RegisterRDID_SectorArchitecture256KB = 0x00,
     kS25FL256_RegisterRDID_SectorArchitecture64KB = 0x01,
 } S25FL256_RegisterRDID_SectorArchitecture_t;
 
-
 // Read Electronic Signature.
 #define kS25FL256_RegisterRES       0xAB
 
-
-// Register Access.
-// -------------------------------------
+/// Register Access.
 
 // Read Status Register-1.
 #define kS25FL256_RegisterRDSR1     0x05
@@ -114,6 +107,7 @@ typedef enum
 
 // Read Status Register-2.
 #define kS25FL256_RegisterRDSR2     0x07
+
 typedef enum
 {
     // Program Suspend.
@@ -128,6 +122,7 @@ typedef enum
 
 // Read Configuration Register-1.
 #define kS25FL256_RegisterRDCR      0x35
+
 typedef enum
 {
     // Lock current state of BP2-0 bits in Status Register, TBPROT and TBPARM in Configuration Register, and OTP regions.
@@ -169,8 +164,7 @@ typedef enum
 // Bank Register Access (Legacy Command formerly used for Deep Power Down).
 #define kS25FL256_RegisterBRAC      0xb9
 
-// Read Flash Array.
-// -------------------------------------
+/// Read Flash Array.
 
 // Read (3- or 4-byte address)
 #define kS25FL256_RegisterREAD      0x03
@@ -196,8 +190,7 @@ typedef enum
 // Read Dual Out (4-byte address)
 #define kS25FL256_Register4DOR      0x3C
 
-// Program Flash Array
-// -------------------------------------
+/// Program Flash Array.
 
 // Page Program (3- or 4-byte address)
 #define kS25FL256_RegisterPP        0x02
@@ -205,8 +198,7 @@ typedef enum
 // Page Program (4-byte address)
 #define kS25FL256_Register4PP       0x12
 
-// Erase Flash Array.
-// -------------------------------------
+/// Erase Flash Array.
 
 // Parameter 4-kB, sector Erase (3- or 4-byte address).
 #define kS25FL256_RegisterP4E       0x20
@@ -239,13 +231,13 @@ int S25FL256Init(void);
 ///
 int S25FL256BusyWait(void);
 ///
-int S25FL256Erase4K(uint32_t inSectorAddress);
+int S25FL256Erase4K(uint32_t inAddress);
 ///
-int S25FL256Erase64K(uint32_t inSectorAddress);
+int S25FL256Erase64K(uint32_t inAddress);
 ///
-int S25FL256PageWrite(uint32_t inSectorAddress, uint8_t* inData, uint32_t inSize);
+int S25FL256PageWrite(uint32_t inAddress, uint8_t* inData, uint32_t inSize);
 ///
-int S25FL256PageRead(uint32_t inSectorAddress, uint8_t* outData, uint32_t inSize);
+int S25FL256PageRead(uint32_t inAddress, uint8_t* outData, uint32_t inSize);
 ///
 uint16_t S25FL256GetPageSize(void);
 
