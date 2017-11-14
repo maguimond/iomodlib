@@ -22,259 +22,310 @@
 #include "utils.h"
 
 // ----------------------------------------------------------------------------
-#define MAX_POLY_CORNERS 200
-#define POLY_Y(z) ((int32_t)((points + z)->x))
-#define POLY_X(z) ((int32_t)((points + z)->y))
-#define ABS(X)  ((X) > 0 ? (X) : -(X))
-
-#define LCD_TEST_DELAY 100
-#define LCD_TEST_DELAY_LONG 100
-
 // Private variables.
 static lcd_t lcd;
 static TextBox_t gTextBox;
 
-static const uint16_t ILI9325_reg_table[] =
+static const uint16_t kLCDRegisterTable_ILI9325[] =
 {
-    ILI9325_START_OSC        , 0x0001, // Start oscillator
-    LCD_DELAY                , 50,     // 50 millisecond delay
-    ILI9325_DRIV_OUT_CTRL    , 0x0100,
-    ILI9325_DRIV_WAV_CTRL    , 0x0700,
-    ILI9325_ENTRY_MOD        , 0x1030,
-    ILI9325_RESIZE_CTRL      , 0x0000,
-    ILI9325_DISP_CTRL2       , 0x0202,
-    ILI9325_DISP_CTRL3       , 0x0000,
-    ILI9325_DISP_CTRL4       , 0x0000,
-    ILI9325_RGB_DISP_IF_CTRL1, 0x0,
-    ILI9325_FRM_MARKER_POS   , 0x0,
-    ILI9325_RGB_DISP_IF_CTRL2, 0x0,
-    ILI9325_POW_CTRL1        , 0x0000,
-    ILI9325_POW_CTRL2        , 0x0007,
-    ILI9325_POW_CTRL3        , 0x0000,
-    ILI9325_POW_CTRL4        , 0x0000,
-    LCD_DELAY                , 200,
-    ILI9325_POW_CTRL1        , 0x1690,
-    ILI9325_POW_CTRL2        , 0x0227,
-    LCD_DELAY                , 50,
-    ILI9325_POW_CTRL3        , 0x001A,
-    LCD_DELAY                , 50,
-    ILI9325_POW_CTRL4        , 0x1800,
-    ILI9325_POW_CTRL7        , 0x002A,
-    LCD_DELAY                , 50,
-    ILI9325_GAMMA_CTRL1      , 0x0000,
-    ILI9325_GAMMA_CTRL2      , 0x0000,
-    ILI9325_GAMMA_CTRL3      , 0x0000,
-    ILI9325_GAMMA_CTRL4      , 0x0206,
-    ILI9325_GAMMA_CTRL5      , 0x0808,
-    ILI9325_GAMMA_CTRL6      , 0x0007,
-    ILI9325_GAMMA_CTRL7      , 0x0201,
-    ILI9325_GAMMA_CTRL8      , 0x0000,
-    ILI9325_GAMMA_CTRL9      , 0x0000,
-    ILI9325_GAMMA_CTRL10     , 0x0000,
-    ILI9325_GRAM_HOR_AD      , 0x0000,
-    ILI9325_GRAM_VER_AD      , 0x0000,
-    ILI9325_HOR_START_AD     , 0x0000,
-    ILI9325_HOR_END_AD       , 0x00EF,
-    ILI9325_VER_START_AD     , 0X0000,
-    ILI9325_VER_END_AD       , 0x013F,
+    // Start oscillator.
+    kLCDRegister_ILI9325_START_OSC, 0x0001,
+    // 50 millisecond delay.
+    kLCDDelay, 50,
+    kLCDRegister_ILI9325_DRIV_OUT_CTRL, 0x0100,
+    kLCDRegister_ILI9325_DRIV_WAV_CTRL, 0x0700,
+    kLCDRegister_ILI9325_ENTRY_MOD, 0x1030,
+    kLCDRegister_ILI9325_RESIZE_CTRL, 0x0000,
+    kLCDRegister_ILI9325_DISP_CTRL2, 0x0202,
+    kLCDRegister_ILI9325_DISP_CTRL3, 0x0000,
+    kLCDRegister_ILI9325_DISP_CTRL4, 0x0000,
+    kLCDRegister_ILI9325_RGB_DISP_IF_CTRL1, 0x0,
+    kLCDRegister_ILI9325_FRM_MARKER_POS, 0x0,
+    kLCDRegister_ILI9325_RGB_DISP_IF_CTRL2, 0x0,
+    kLCDRegister_ILI9325_POW_CTRL1, 0x0000,
+    kLCDRegister_ILI9325_POW_CTRL2, 0x0007,
+    kLCDRegister_ILI9325_POW_CTRL3, 0x0000,
+    kLCDRegister_ILI9325_POW_CTRL4, 0x0000,
+    kLCDDelay, 200,
+    kLCDRegister_ILI9325_POW_CTRL1, 0x1690,
+    kLCDRegister_ILI9325_POW_CTRL2, 0x0227,
+    kLCDDelay, 50,
+    kLCDRegister_ILI9325_POW_CTRL3, 0x001A,
+    kLCDDelay, 50,
+    kLCDRegister_ILI9325_POW_CTRL4, 0x1800,
+    kLCDRegister_ILI9325_POW_CTRL7, 0x002A,
+    kLCDDelay, 50,
+    kLCDRegister_ILI9325_GAMMA_CTRL1, 0x0000,
+    kLCDRegister_ILI9325_GAMMA_CTRL2, 0x0000,
+    kLCDRegister_ILI9325_GAMMA_CTRL3, 0x0000,
+    kLCDRegister_ILI9325_GAMMA_CTRL4, 0x0206,
+    kLCDRegister_ILI9325_GAMMA_CTRL5, 0x0808,
+    kLCDRegister_ILI9325_GAMMA_CTRL6, 0x0007,
+    kLCDRegister_ILI9325_GAMMA_CTRL7, 0x0201,
+    kLCDRegister_ILI9325_GAMMA_CTRL8, 0x0000,
+    kLCDRegister_ILI9325_GAMMA_CTRL9, 0x0000,
+    kLCDRegister_ILI9325_GAMMA_CTRL10, 0x0000,
+    kLCDRegister_ILI9325_GRAM_HOR_AD, 0x0000,
+    kLCDRegister_ILI9325_GRAM_VER_AD, 0x0000,
+    kLCDRegister_ILI9325_HOR_START_AD, 0x0000,
+    kLCDRegister_ILI9325_HOR_END_AD, 0x00EF,
+    kLCDRegister_ILI9325_VER_START_AD, 0X0000,
+    kLCDRegister_ILI9325_VER_END_AD, 0x013F,
     // Driver Output Control (R60h)
-    ILI9325_GATE_SCAN_CTRL1  , 0xA700,
+    kLCDRegister_ILI9325_GATE_SCAN_CTRL1, 0xA700,
     // Driver Output Control (R61h)
-    ILI9325_GATE_SCAN_CTRL2  , 0x0003,
+    kLCDRegister_ILI9325_GATE_SCAN_CTRL2, 0x0003,
     // Driver Output Control (R62h)
-    ILI9325_GATE_SCAN_CTRL3  , 0x0000,
+    kLCDRegister_ILI9325_GATE_SCAN_CTRL3, 0x0000,
     // Panel Interface Control 1 (R90h)
-    ILI9325_PANEL_IF_CTRL1   , 0X0010,
-    ILI9325_PANEL_IF_CTRL2   , 0X0000,
-    ILI9325_PANEL_IF_CTRL3   , 0X0003,
-    ILI9325_PANEL_IF_CTRL4   , 0X1100,
-    ILI9325_PANEL_IF_CTRL5   , 0X0000,
-    ILI9325_PANEL_IF_CTRL6   , 0X0000,
+    kLCDRegister_ILI9325_PANEL_IF_CTRL1, 0X0010,
+    kLCDRegister_ILI9325_PANEL_IF_CTRL2, 0X0000,
+    kLCDRegister_ILI9325_PANEL_IF_CTRL3, 0X0003,
+    kLCDRegister_ILI9325_PANEL_IF_CTRL4, 0X1100,
+    kLCDRegister_ILI9325_PANEL_IF_CTRL5, 0X0000,
+    kLCDRegister_ILI9325_PANEL_IF_CTRL6, 0X0000,
     // Main screen turn on
-    ILI9325_DISP_CTRL1       , 0x0133,
+    kLCDRegister_ILI9325_DISP_CTRL1, 0x0133,
 };
+
+// ----------------------------------------------------------------------------
+static void LCDSetCursor(uint16_t positonX, uint16_t positonY)
+{
+    uint16_t cursorX;
+    uint16_t cursorY;
+
+    switch (lcd.driver)
+    {
+        case kLCDDriver_ILI9325:
+        case kLCDDriver_ILI9328:
+        {
+            switch (lcd.orientation)
+            {
+                case kLCDOrientation_Landscape1:
+                    cursorX = positonY;
+                    cursorY = kLCDHeight - 1 - positonX;
+                    break;
+                case kLCDOrientation_Portrait1:
+                    cursorX = kLCDWidth - 1 - positonX;
+                    cursorY = kLCDHeight - 1 - positonY;
+                    break;
+                case kLCDOrientation_Landscape2:
+                    cursorX = kLCDWidth - 1 - positonY;
+                    cursorY = positonX;
+                    break;
+                default:    // kLCDOrientation_Portrait2
+                    cursorX = positonX;
+                    cursorY = positonY;
+                    break;
+            }
+
+            // Set the X address of the display cursor.
+            LCDWriteRegister(kLCDRegister_ILI9325_GRAM_HOR_AD, cursorX);
+            // Set the Y address of the display cursor.
+            LCDWriteRegister(kLCDRegister_ILI9325_GRAM_VER_AD, cursorY);
+            break;
+        }
+        case kLCDDriver_ILI9341:
+        {
+            switch (lcd.orientation)
+            {
+                case kLCDOrientation_Landscape1:
+                    cursorX = positonY;
+                    cursorY = kLCDHeight - 1 - positonX;
+                    break;
+                case kLCDOrientation_Portrait1:
+                    cursorX = kLCDWidth - 1 - positonX;
+                    cursorY = kLCDHeight - 1 - positonY;
+                    break;
+                case kLCDOrientation_Landscape2:
+                    cursorX = kLCDWidth - 1 - positonY;
+                    cursorY = positonX;
+                    break;
+                default:    // kLCDOrientation_Portrait2
+                    cursorX = positonX;
+                    cursorY = positonY;
+                    break;
+            }
+            break;
+        }
+        case kLCDDriver_SSD2119:
+        {   // Set the X address of the display cursor.
+            LCDWriteRegister(kLCDRegister_SSD2119_X_RAM_ADDR_REG, positonX);
+
+            // Set the Y address of the display cursor.
+            LCDWriteRegister(kLCDRegister_SSD2119_Y_RAM_ADDR_REG, positonY);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+// ----------------------------------------------------------------------------
+static void LCDSetAddressWindows(uint16_t positonX, uint16_t positonY, uint16_t width, uint16_t height)
+{
+    switch (lcd.driver)
+    {
+        case kLCDDriver_ILI9325:
+        case kLCDDriver_ILI9328:
+        {
+            // Set address window
+            LCDWriteRegister(kLCDRegister_ILI9325_HOR_START_AD, positonX);
+            LCDWriteRegister(kLCDRegister_ILI9325_HOR_END_AD, width);
+            LCDWriteRegister(kLCDRegister_ILI9325_VER_START_AD, positonY);
+            LCDWriteRegister(kLCDRegister_ILI9325_VER_END_AD, height);
+            // Set address counter to top left
+            LCDSetCursor(0, 0);
+            break;
+        }
+        case kLCDDriver_ILI9341:
+        {
+            LCDWriteRegister(kLCDRegister_ILI9341_COLADDRSET, positonX);
+            LCDWriteRegister(kLCDRegister_ILI9341_COLADDRSET, width);
+            LCDWriteRegister(kLCDRegister_ILI9341_PAGEADDRSET, positonY);
+            LCDWriteRegister(kLCDRegister_ILI9341_PAGEADDRSET, height);
+            break;
+        }
+        case kLCDDriver_SSD2119:
+        {
+            uint32_t value = 0;
+
+            LCDWriteRegister(kLCDRegister_SSD2119_H_RAM_START_REG, positonX);
+
+            if ((positonX + width) >= lcd.width)
+            {
+                LCDWriteRegister(kLCDRegister_SSD2119_H_RAM_END_REG, lcd.width - 1);
+            }
+            else
+            {
+                LCDWriteRegister(kLCDRegister_SSD2119_H_RAM_END_REG, positonX + width);
+            }
+
+            if ((positonY + height) >= lcd.height)
+            {
+                value = (lcd.height - 1) << 8;
+            }
+            else
+            {
+                value = (positonY + height) << 8;
+            }
+            value |= positonX;
+            LCDWriteRegister(kLCDRegister_SSD2119_V_RAM_POS_REG, value);
+            LCDSetCursor(positonX, positonY);
+            break;
+        }
+        default:
+            break;
+    }
+}
 
 // ----------------------------------------------------------------------------
 static void LCDSetRegisters(uint16_t driver)
 {
     switch (driver)
     {
-        case ILI9325:
-        case ILI9328:
+        case kLCDDriver_ILI9325:
+        case kLCDDriver_ILI9328:
         {
-            uint8_t reg_idx = 0;
-            uint16_t addr, val;
-            while(reg_idx < sizeof(ILI9325_reg_table) / sizeof(uint16_t))
+            uint8_t registerIndex = 0;
+            uint16_t registerAddress;
+            uint16_t registerValue;
+            while(registerIndex < sizeof(kLCDRegisterTable_ILI9325) / sizeof(uint16_t))
             {
-                addr = ILI9325_reg_table[reg_idx++];
-                val = ILI9325_reg_table[reg_idx++];
-                if(addr == LCD_DELAY)
+                registerAddress = kLCDRegisterTable_ILI9325[registerIndex ++];
+                registerValue = kLCDRegisterTable_ILI9325[registerIndex ++];
+                if(registerAddress == kLCDDelay)
                 {
-                    Delay(val);
+                    Delay(registerValue);
                 }
                 else
                 {
-                    LCDWriteRegister(addr, val);
+                    LCDWriteRegister(registerAddress, registerValue);
                 }
             }
             break;
         }
-        case SSD2119:
+        case kLCDDriver_ILI9341:
+        {
+            LCDWriteRegister(kLCDRegister_ILI9341_SOFTRESET, 0x00);
+            DelayUs(10000);
+            LCDWriteRegister(kLCDRegister_ILI9341_DISPLAYOFF, 0x00);
+            LCDWriteRegister(kLCDRegister_ILI9341_POWERCONTROL1, 0x23);
+            LCDWriteRegister(kLCDRegister_ILI9341_POWERCONTROL2, 0x10);
+            // Send 16 bits in two bytes.
+            LCDWriteRegister(kLCDRegister_ILI9341_VCOMCONTROL1, 0x2B);
+            LCDWriteRegister(kLCDRegister_ILI9341_VCOMCONTROL1, 0x2B);
+            LCDWriteRegister(kLCDRegister_ILI9341_VCOMCONTROL2, 0x00C0);
+            LCDWriteRegister(kLCDRegister_ILI9341_MEMCONTROL, kLCDRegister_ILI9341_MADCTL_MY | kLCDRegister_ILI9341_MADCTL_BGR);
+            LCDWriteRegister(kLCDRegister_ILI9341_PIXELFORMAT, 0x55);
+            // Send 16 bits in two bytes.
+            LCDWriteRegister(kLCDRegister_ILI9341_FRAMECONTROL, 0x00);
+            LCDWriteRegister(kLCDRegister_ILI9341_FRAMECONTROL, 0x1B);
+            LCDWriteRegister(kLCDRegister_ILI9341_ENTRYMODE, 0x07);
+            // writeRegister32(kLCDRegister_ILI9341_DISPLAYFUNC, 0x0A822700);
+            LCDWriteRegister(kLCDRegister_ILI9341_SLEEPOUT, 0x00);
+            Delay(15);
+            LCDWriteRegister(kLCDRegister_ILI9341_DISPLAYON, 0x00);
+            DelayUs(10000);
+            LCDSetAddressWindows(0, 0, kLCDWidth - 1, kLCDHeight - 1);
+            break;
+        }
+        case kLCDDriver_SSD2119:
         {
             // Enter sleep mode (if we are not already there).
-            LCDWriteRegister(SSD2119_SLEEP_MODE_1_REG, 0x0001);
+            LCDWriteRegister(kLCDRegister_SSD2119_SLEEP_MODE_1_REG, 0x0001);
 
             // Set initial power parameters.
-            LCDWriteRegister(SSD2119_PWR_CTRL_5_REG, 0x00B2);
-            LCDWriteRegister(SSD2119_VCOM_OTP_1_REG, 0x0006);
+            LCDWriteRegister(kLCDRegister_SSD2119_PWR_CTRL_5_REG, 0x00B2);
+            LCDWriteRegister(kLCDRegister_SSD2119_VCOM_OTP_1_REG, 0x0006);
 
             // Start the oscillator.
-            LCDWriteRegister(SSD2119_OSC_START_REG, 0x0001);
+            LCDWriteRegister(kLCDRegister_SSD2119_OSC_START_REG, 0x0001);
 
             // Set pixel format and basic display orientation (scanning direction).
-            LCDWriteRegister(SSD2119_OUTPUT_CTRL_REG, 0x30EF);
-            LCDWriteRegister(SSD2119_LCD_DRIVE_AC_CTRL_REG, 0x0600);
+            LCDWriteRegister(kLCDRegister_SSD2119_OUTPUT_CTRL_REG, 0x30EF);
+            LCDWriteRegister(kLCDRegister_SSD2119_LCD_DRIVE_AC_CTRL_REG, 0x0600);
 
             // Exit sleep mode.
-            LCDWriteRegister(SSD2119_SLEEP_MODE_1_REG, 0x0000);
+            LCDWriteRegister(kLCDRegister_SSD2119_SLEEP_MODE_1_REG, 0x0000);
             Delay(5);
 
             // Configure pixel color format and MCU interface parameters.
-            LCDWriteRegister(SSD2119_ENTRY_MODE_REG, ENTRY_MODE_DEFAULT);
+            LCDWriteRegister(kLCDRegister_SSD2119_ENTRY_MODE_REG, kLCDRegister_SSD2119_ENTRY_MODE_DEFAULT);
 
             // Set analog parameters
-            LCDWriteRegister(SSD2119_SLEEP_MODE_2_REG, 0x0999);
-            LCDWriteRegister(SSD2119_ANALOG_SET_REG, 0x3800);
+            LCDWriteRegister(kLCDRegister_SSD2119_SLEEP_MODE_2_REG, 0x0999);
+            LCDWriteRegister(kLCDRegister_SSD2119_ANALOG_SET_REG, 0x3800);
 
             // Enable the display
-            LCDWriteRegister(SSD2119_DISPLAY_CTRL_REG, 0x0033);
+            LCDWriteRegister(kLCDRegister_SSD2119_DISPLAY_CTRL_REG, 0x0033);
 
             // Set VCIX2 voltage to 6.1V.
-            LCDWriteRegister(SSD2119_PWR_CTRL_2_REG, 0x0005);
+            LCDWriteRegister(kLCDRegister_SSD2119_PWR_CTRL_2_REG, 0x0005);
 
             // Configure gamma correction.
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_1_REG, 0x0000);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_2_REG, 0x0303);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_3_REG, 0x0407);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_4_REG, 0x0301);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_5_REG, 0x0301);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_6_REG, 0x0403);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_7_REG, 0x0707);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_8_REG, 0x0400);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_9_REG, 0x0a00);
-            LCDWriteRegister(SSD2119_GAMMA_CTRL_10_REG, 0x1000);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_1_REG, 0x0000);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_2_REG, 0x0303);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_3_REG, 0x0407);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_4_REG, 0x0301);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_5_REG, 0x0301);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_6_REG, 0x0403);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_7_REG, 0x0707);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_8_REG, 0x0400);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_9_REG, 0x0a00);
+            LCDWriteRegister(kLCDRegister_SSD2119_GAMMA_CTRL_10_REG, 0x1000);
 
             // Configure Vlcd63 and VCOMl
-            LCDWriteRegister(SSD2119_PWR_CTRL_3_REG, 0x000A);
-            LCDWriteRegister(SSD2119_PWR_CTRL_4_REG, 0x2E00);
+            LCDWriteRegister(kLCDRegister_SSD2119_PWR_CTRL_3_REG, 0x000A);
+            LCDWriteRegister(kLCDRegister_SSD2119_PWR_CTRL_4_REG, 0x2E00);
 
             // Set the display size and ensure that the GRAM window is set to allow access to the full display buffer.
-            LCDWriteRegister(SSD2119_V_RAM_POS_REG, (kLCDWidth - 1) << 8);
-            LCDWriteRegister(SSD2119_H_RAM_START_REG, 0x0000);
-            LCDWriteRegister(SSD2119_H_RAM_END_REG, kLCDHeight - 1);
+            LCDWriteRegister(kLCDRegister_SSD2119_V_RAM_POS_REG, (kLCDWidth - 1) << 8);
+            LCDWriteRegister(kLCDRegister_SSD2119_H_RAM_START_REG, 0x0000);
+            LCDWriteRegister(kLCDRegister_SSD2119_H_RAM_END_REG, kLCDHeight - 1);
 
-            LCDWriteRegister(SSD2119_X_RAM_ADDR_REG, 0x00);
-            LCDWriteRegister(SSD2119_Y_RAM_ADDR_REG, 0x00);
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-// ----------------------------------------------------------------------------
-static void LCDSetCursor(uint16_t x_pos, uint16_t y_pos)
-{
-    uint16_t cursor_x;
-    uint16_t cursor_y;
-
-    switch (lcd.driver)
-    {
-        case ILI9325:
-        case ILI9328:
-        {
-            switch (lcd.orientation)
-            {
-                case kLCDOrientation_Landscape1:
-                    cursor_x = y_pos;
-                    cursor_y = kLCDHeight - 1 - x_pos;
-                    break;
-                case kLCDOrientation_Portrait1:
-                    cursor_x = kLCDWidth - 1 - x_pos;
-                    cursor_y = kLCDHeight - 1 - y_pos;
-                    break;
-                case kLCDOrientation_Landscape2:
-                    cursor_x = kLCDWidth - 1 - y_pos;
-                    cursor_y = x_pos;
-                    break;
-                default:    // kLCDOrientation_Portrait2
-                    cursor_x = x_pos;
-                    cursor_y = y_pos;
-                    break;
-            }
-
-            // Set the X address of the display cursor.
-            LCDWriteRegister(ILI9325_GRAM_HOR_AD, cursor_x);
-            // Set the Y address of the display cursor.
-            LCDWriteRegister(ILI9325_GRAM_VER_AD, cursor_y);
-            break;
-        }
-        case SSD2119:
-        {   // Set the X address of the display cursor.
-            LCDWriteRegister(SSD2119_X_RAM_ADDR_REG, x_pos);
-
-            // Set the Y address of the display cursor.
-            LCDWriteRegister(SSD2119_Y_RAM_ADDR_REG, y_pos);
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-// ----------------------------------------------------------------------------
-static void LCDSetAddressWindows(uint16_t x_pos, uint16_t y_pos, uint16_t width, uint16_t height)
-{
-    switch (lcd.driver)
-    {
-        case ILI9325:
-        case ILI9328:
-        {
-            // Set address window
-            LCDWriteRegister(ILI9325_HOR_START_AD, x_pos);
-            LCDWriteRegister(ILI9325_HOR_END_AD, width);
-            LCDWriteRegister(ILI9325_VER_START_AD, y_pos);
-            LCDWriteRegister(ILI9325_VER_END_AD, height);
-            // Set address counter to top left
-            LCDSetCursor(0, 0);
-            break;
-        }
-        case SSD2119:
-        {
-            uint32_t value = 0;
-
-            LCDWriteRegister(SSD2119_H_RAM_START_REG, x_pos);
-
-            if ((x_pos + width) >= lcd.width)
-            {
-                LCDWriteRegister(SSD2119_H_RAM_END_REG, lcd.width - 1);
-            }
-            else
-            {
-                LCDWriteRegister(SSD2119_H_RAM_END_REG, x_pos + width);
-            }
-
-            if ((y_pos + height) >= lcd.height)
-            {
-                value = (lcd.height - 1) << 8;
-            }
-            else
-            {
-                value = (y_pos + height) << 8;
-            }
-            value |= x_pos;
-            LCDWriteRegister(SSD2119_V_RAM_POS_REG, value);
-            LCDSetCursor(x_pos, y_pos);
+            LCDWriteRegister(kLCDRegister_SSD2119_X_RAM_ADDR_REG, 0x00);
+            LCDWriteRegister(kLCDRegister_SSD2119_Y_RAM_ADDR_REG, 0x00);
             break;
         }
         default:
@@ -286,7 +337,7 @@ static void LCDSetAddressWindows(uint16_t x_pos, uint16_t y_pos, uint16_t width,
 static void LCDSetOrientation(uint8_t orientation)
 {
     lcd.orientation = orientation;
-    uint16_t entry_orientation = 0;
+    uint16_t entryOrientation = 0;
 
     switch (lcd.orientation)
     {
@@ -294,34 +345,34 @@ static void LCDSetOrientation(uint8_t orientation)
         {
             lcd.width  = kLCDHeight;
             lcd.height = kLCDWidth;
-            entry_orientation = ILI9325_ENTRY_OR4;
+            entryOrientation = kLCDRegister_ILI9325_ENTRY_OR4;
             break;
         }
         case kLCDOrientation_Portrait1:
         {
             lcd.width  = kLCDWidth;
             lcd.height = kLCDHeight;
-            entry_orientation = ILI9325_ENTRY_OR3;
+            entryOrientation = kLCDRegister_ILI9325_ENTRY_OR3;
             break;
         }
         case kLCDOrientation_Landscape2:
         {
             lcd.width  = kLCDHeight;
             lcd.height = kLCDWidth;
-            entry_orientation = ILI9325_ENTRY_OR2;
+            entryOrientation = kLCDRegister_ILI9325_ENTRY_OR2;
             break;
         }
         case kLCDOrientation_Portrait2:
         {
             lcd.width  = kLCDWidth;
             lcd.height = kLCDHeight;
-            entry_orientation = ILI9325_ENTRY_OR1;
+            entryOrientation = kLCDRegister_ILI9325_ENTRY_OR1;
             break;
         }
     }
-    entry_orientation |= ILI9325_ENTRY_BGR;
-    LCDWriteRegister(ILI9325_ENTRY_MOD, entry_orientation);
-    // For ILI932x, init default full-screen address window
+    entryOrientation |= kLCDRegister_ILI9325_ENTRY_BGR;
+    LCDWriteRegister(kLCDRegister_ILI9325_ENTRY_MOD, entryOrientation);
+    // For ILI932x, initialize default full-screen address window.
     LCDSetAddressWindows(0, 0, kLCDWidth, kLCDHeight);
 }
 
@@ -389,8 +440,9 @@ uint16_t LCDSetup(void)
     LCDClearScreen();
     LCDSetTextWrapping(kLCDTextWrapping_Word);
     LCDSetOrientation(kLCDOrientation_Landscape1);
-    LCDSetColors(WHITE, BLACK);
+    LCDSetColors(kLCDColor_White, kLCDColor_Black);
     LCDSetFont(FONT_7X10);
+    LCDFillScreen(kLCDColor_Black);
 
     return lcd.driver;
 }
@@ -399,8 +451,14 @@ uint16_t LCDSetup(void)
 uint16_t LCDReadID(void)
 {
     uint16_t driver;
-    driver = LCDReadRegister(0x00D3);
+    driver = LCDReadRegister(kLCDRegister_ILI9341_ReadID4);
     driver = LCDReadRAMData();
+    if (driver != kLCDDriver_ILI9325)
+    {
+        // For 9341 the ID is in the 3rd and 4th parameters (2nd is IC version).
+        driver = LCDReadRAMData() << 8;
+        driver |= LCDReadRAMData();
+    }
     return driver;
 }
 
@@ -409,7 +467,8 @@ void LCDFillScreen(uint16_t inColor)
 {
     uint32_t idx = 0;
 
-    LCDSetCursor(0, 0);
+    //LCDSetCursor(0, 0);
+    LCDSetAddressWindows(0, 0, lcd.width - 1, lcd.height - 1);
     LCDAccessGRAM();
     for (idx = 0; idx < kLCDHeight * kLCDWidth; idx++)
     {
@@ -441,11 +500,11 @@ void LCDClearLine(uint16_t line, uint8_t line_with)
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawLine(uint16_t x_pos, uint16_t y_pos, uint16_t length, uint8_t direction, uint16_t inColor)
+void LCDDrawLine(uint16_t positonX, uint16_t positonY, uint16_t length, uint8_t direction, uint16_t inColor)
 {
     uint32_t i = 0;
 
-    LCDSetCursor(x_pos, y_pos);
+    LCDSetCursor(positonX, positonY);
     if (direction == kLCDDirection_Horizontal)
     {
         LCDAccessGRAM();
@@ -460,38 +519,38 @@ void LCDDrawLine(uint16_t x_pos, uint16_t y_pos, uint16_t length, uint8_t direct
         {
             LCDAccessGRAM();
             LCDWriteRAMData(inColor);
-            y_pos++;
-            LCDSetCursor(x_pos, y_pos);
+            positonY++;
+            LCDSetCursor(positonX, positonY);
         }
     }
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawRectangle(uint16_t x_pos, uint16_t y_pos, uint16_t width, uint16_t height, uint16_t inForeground)
+void LCDDrawRectangle(uint16_t positonX, uint16_t positonY, uint16_t width, uint16_t height, uint16_t inForeground)
 {
-    LCDDrawLine(x_pos, y_pos, width, kLCDDirection_Horizontal, inForeground);
-    LCDDrawLine(x_pos, (y_pos + height), width, kLCDDirection_Horizontal, inForeground);
-    LCDDrawLine(x_pos, y_pos, height, kLCDDirection_Vertical, inForeground);
-    LCDDrawLine((x_pos + width - 1), y_pos, height, kLCDDirection_Vertical, inForeground);
+    LCDDrawLine(positonX, positonY, width, kLCDDirection_Horizontal, inForeground);
+    LCDDrawLine(positonX, (positonY + height), width, kLCDDirection_Horizontal, inForeground);
+    LCDDrawLine(positonX, positonY, height, kLCDDirection_Vertical, inForeground);
+    LCDDrawLine((positonX + width - 1), positonY, height, kLCDDirection_Vertical, inForeground);
 }
 // ----------------------------------------------------------------------------
-void LCDDrawFullRectangle(uint16_t x_pos, uint16_t y_pos, uint16_t width, uint16_t height, uint16_t inForeground, uint16_t inBackground)
+void LCDDrawFullRectangle(uint16_t positonX, uint16_t positonY, uint16_t width, uint16_t height, uint16_t inForeground, uint16_t inBackground)
 {
-    LCDDrawRectangle(x_pos, y_pos, width, height, inForeground);
+    LCDDrawRectangle(positonX, positonY, width, height, inForeground);
 
     width -= 2;
     height --;
-    x_pos ++;
-    y_pos ++;
+    positonX ++;
+    positonY ++;
 
     while (height --)
     {
-        LCDDrawLine(x_pos, y_pos ++, width, kLCDDirection_Horizontal, inBackground);
+        LCDDrawLine(positonX, positonY ++, width, kLCDDirection_Horizontal, inBackground);
     }
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inColor)
+void LCDDrawCircle(uint16_t positonX, uint16_t positonY, uint16_t radius, uint16_t inColor)
 {
     int32_t  D;// Decision Variable
     uint32_t  current_x;// Current X Value
@@ -503,21 +562,21 @@ void LCDDrawCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inC
 
     while (current_x <= current_y)
     {
-        LCDSetCursor(x_pos + current_x, y_pos + current_y);
+        LCDSetCursor(positonX + current_x, positonY + current_y);
         LCDWritePixel(inColor);
-        LCDSetCursor(x_pos + current_x, y_pos - current_y);
+        LCDSetCursor(positonX + current_x, positonY - current_y);
         LCDWritePixel(inColor);
-        LCDSetCursor(x_pos - current_x, y_pos + current_y);
+        LCDSetCursor(positonX - current_x, positonY + current_y);
         LCDWritePixel(inColor);
-        LCDSetCursor(x_pos - current_x, y_pos - current_y);
+        LCDSetCursor(positonX - current_x, positonY - current_y);
         LCDWritePixel(inColor);
-        LCDSetCursor(x_pos + current_y, y_pos + current_x);
+        LCDSetCursor(positonX + current_y, positonY + current_x);
         LCDWritePixel(inColor);
-        LCDSetCursor(x_pos + current_y, y_pos - current_x);
+        LCDSetCursor(positonX + current_y, positonY - current_x);
         LCDWritePixel(inColor);
-        LCDSetCursor(x_pos - current_y, y_pos + current_x);
+        LCDSetCursor(positonX - current_y, positonY + current_x);
         LCDWritePixel(inColor);
-        LCDSetCursor(x_pos - current_y, y_pos - current_x);
+        LCDSetCursor(positonX - current_y, positonY - current_x);
         LCDWritePixel(inColor);
         if (D < 0)
         {
@@ -533,11 +592,11 @@ void LCDDrawCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inC
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawFullCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inForeground, uint16_t inBackground)
+void LCDDrawFullCircle(uint16_t positonX, uint16_t positonY, uint16_t radius, uint16_t inForeground, uint16_t inBackground)
 {
-    LCDDrawLine(x_pos, y_pos - radius, 2 * radius + 1, kLCDDirection_Vertical, inBackground);
-    LCDDrawFullCircleHelper(x_pos, y_pos, radius, 3, 0, inBackground);
-    LCDDrawCircle(x_pos, y_pos, radius, inForeground);
+    LCDDrawLine(positonX, positonY - radius, 2 * radius + 1, kLCDDirection_Vertical, inBackground);
+    LCDDrawFullCircleHelper(positonX, positonY, radius, 3, 0, inBackground);
+    LCDDrawCircle(positonX, positonY, radius, inForeground);
 }
 
 // ----------------------------------------------------------------------------
