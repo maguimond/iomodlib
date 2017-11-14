@@ -452,12 +452,12 @@ uint16_t LCDReadID(void)
 {
     uint16_t driver;
     driver = LCDReadRegister(kLCDRegister_ILI9341_ReadID4);
-    driver = LCDReadRAMData();
+    driver = LCDReadRegisterData();
     if (driver != kLCDDriver_ILI9325)
     {
         // For 9341 the ID is in the 3rd and 4th parameters (2nd is IC version).
-        driver = LCDReadRAMData() << 8;
-        driver |= LCDReadRAMData();
+        driver = LCDReadRegisterData() << 8;
+        driver |= LCDReadRegisterData();
     }
     return driver;
 }
@@ -472,7 +472,7 @@ void LCDFillScreen(uint16_t inColor)
     LCDAccessGRAM();
     for (idx = 0; idx < kLCDHeight * kLCDWidth; idx++)
     {
-        LCDWriteRAMData(inColor);
+        LCDWriteGRAMData(inColor);
     }
 }
 
@@ -485,7 +485,7 @@ void LCDClearScreen(void)
     LCDAccessGRAM();
     for (idx = 0; idx < kLCDHeight * kLCDWidth; idx++)
     {
-        LCDWriteRAMData(lcd.background);
+        LCDWriteGRAMData(lcd.background);
     }
 }
 
@@ -510,7 +510,7 @@ void LCDDrawLine(uint16_t positonX, uint16_t positonY, uint16_t length, uint8_t 
         LCDAccessGRAM();
         for (i = 0; i < length; i++)
         {
-            LCDWriteRAMData(inColor);
+            LCDWriteGRAMData(inColor);
         }
     }
     else
@@ -518,7 +518,7 @@ void LCDDrawLine(uint16_t positonX, uint16_t positonY, uint16_t length, uint8_t 
         for (i = 0; i < length; i++)
         {
             LCDAccessGRAM();
-            LCDWriteRAMData(inColor);
+            LCDWriteGRAMData(inColor);
             positonY++;
             LCDSetCursor(positonX, positonY);
         }
@@ -740,11 +740,11 @@ void LCDPutChar(uint16_t x, uint16_t y, char c)
         {
             if ((char_row_mask << v_idx) & 0x8000)
             {
-                LCDWriteRAMData(lcd.foreground);
+                LCDWriteGRAMData(lcd.foreground);
             }
             else
             {
-                LCDWriteRAMData(lcd.background);
+                LCDWriteGRAMData(lcd.background);
             }
         }
         char_line ++;
@@ -839,11 +839,11 @@ void LCDDrawMonoImage(const uint32_t *pict)
         {
             if ((pict[index] & (1 << i)) == 0x00)
             {
-                LCDWriteRAMData(lcd.background);
+                LCDWriteGRAMData(lcd.background);
             }
             else
             {
-                LCDWriteRAMData(lcd.foreground);
+                LCDWriteGRAMData(lcd.foreground);
             }
         }
     }
@@ -871,7 +871,7 @@ void lcd_write_bmp(uint32_t bmp_addr)
 
     for (index = 0; index < size; index++)
     {
-        LCDWriteRAMData(*(__IO uint16_t *)bmp_addr);
+        LCDWriteGRAMData(*(__IO uint16_t *)bmp_addr);
         bmp_addr += 2;
     }
 
