@@ -467,9 +467,6 @@ void TaskBoardConfig(void* args)
         int status = 0;
         if (configMessage.boardID == MasterID)
         {
-#if kDebugEnabled == 1
-            PrintMessage("%s - Info: Writing to master\n", __FUNCTION__);
-#endif
             // Copy config to shadow RAM.
             uint8_t masterConfigCache[kMasterConfigTotalSize] = { 0 };
             status = S25FL256PageRead(kPartition_1_FirstSector, masterConfigCache, kMasterConfigTotalSize);
@@ -491,8 +488,6 @@ void TaskBoardConfig(void* args)
         }
         else
         {
-            PrintMessage("%s - Info: Writing to slave ID %d\n", __FUNCTION__, configMessage.boardID + 1);
-
             // Store data to slave.
             status = PCA9500EEPROMPageWrite(configMessage.boardID, configMessage.address, configMessage.data, configMessage.size);
             // Store new user CRC.

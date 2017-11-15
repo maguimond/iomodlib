@@ -196,23 +196,6 @@ int S25FL256Init(void)
         {
             // Read device info.
             status = S25FL256ReadInfo();
-            if (status == 0)
-            {
-                PrintMessage("%s - Info: S25FL device info...\n"
-                             "Manufacturer ID: 0x%x\n"
-                             "Memory type: 0x%x\n"
-                             "Capacity: 0x%x\n"
-                             "ID-CFI length: 0x%x\n"
-                             "Sector architecture: 0x%x\n"
-                             "Family ID: 0x%x\n",
-                             __FUNCTION__,
-                             gS25FL256.manufacturerID,
-                             gS25FL256.memoryType,
-                             gS25FL256.capacity,
-                             gS25FL256.IDCFI,
-                             gS25FL256.sectorArchitecture,
-                             gS25FL256.familyID);
-            }
         }
     }
 
