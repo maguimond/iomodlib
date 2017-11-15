@@ -25,16 +25,62 @@
 // ----------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------
+// TODO: define in config.
+#define kIOModMaxIOs 8
 
+// Status codes.
+typedef enum
+{
+    kIOMod_Status_NotDetected,
+    kIOMod_Status_Valid,
+    kIOMod_Status_InvalidRange,
+    kIOMod_Status_OverCurrent,
+    // Reserved for future use, keep last.
+    kIOMod_Status_Reserved,
+} PortStatus_Status_t;
+
+// ----------------------------------------------------------------------------
+// Data types
+// ----------------------------------------------------------------------------
+
+typedef struct
+{
+    uint8_t status;
+    uint8_t deviceID;
+    uint8_t outputLevel;
+    // Depending on the architecture, use signed 16-bits or float.
+#ifdef GCC_ARMCM3
+    int16_t data;
+#else
+    float data;
+#endif
+} IOModPort_t;
+
+typedef struct
+{
+    uint8_t eepromLayout;
+    uint8_t major;
+    uint8_t minor;
+} IOModVersion_t;
+
+typedef struct
+{
+    IOModVersion_t version;
+    uint8_t model;
+    IOModPort_t io[kIOModMaxIOs];
+} IOMod_t;
 
 // ----------------------------------------------------------------------------
 // Macros
 // ----------------------------------------------------------------------------
-
+#define mIOModValidateStatus(returnStatus) if (returnStatus != 0) { return returnStatus; }
 
 // ----------------------------------------------------------------------------
 // Function prototypes
 // ----------------------------------------------------------------------------
-
+///
+int IOModADCInit(uint8_t inSlaveID);
+///
+int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 
 #endif // IOMOD_H_

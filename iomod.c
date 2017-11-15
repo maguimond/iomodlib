@@ -16,22 +16,88 @@
  * This file is encoded in UTF-8.
  */
 
-// App includes.
+// Lib includes.
 #include "iomod.h"
-#include "boardConfig.h"
+#include "boardconfig.h"
 
 // Drivers includes.
 #include "adc128d818.h"
-#include "pca9500.h"
-
-// Common includes.
 #include "USP10973.h"
-#include "Conversion.h"
-#include "utils.h"
-#include "error.h"
-
-//#define mIOModuleValidateArg(expression) ((expression) ? (void)0 : IOModuleSetMasterStatusFlag(kMasterStatusFlags_InvalidArg))
-#define mIOModuleValidateArg(arg) if (arg) { (void)0; } else { IOModuleSetMasterStatusFlag(kMasterStatusFlags_InvalidArg); return -1; }
-#define mIOModuleValidateStatus(returnStatus) if (returnStatus != kSuccess) { return returnStatus; }
 
 // ----------------------------------------------------------------------------
+// Private variables.
+IOMod_t gIOMod;
+static uint8_t gADCI2CAddressTable[kADC128D818_MaxAddresses];
+
+// ----------------------------------------------------------------------------
+uint8_t IOModGetADCAddress(uint8_t inSlaveID)
+{
+    // TODO: Adapt when board is revised to support at least 6 ADC addresses: https://github.com/GeniALE/CarteAcquisitionControle/issues/41.
+    // Set local devices addresses.
+    uint8_t adcAddress;
+    switch (inSlaveID)
+    {
+        case SlaveID1:
+            adcAddress = kADC128D818_SlaveAddress1;
+            break;
+        case SlaveID2:
+            adcAddress = kADC128D818_SlaveAddress2;
+            break;
+        case SlaveID3:
+            adcAddress = kADC128D818_SlaveAddress3;
+            break;
+        case SlaveID4:
+            adcAddress = kADC128D818_SlaveAddress4;
+            break;
+        case SlaveID5:
+            adcAddress = kADC128D818_SlaveAddress5;
+            break;
+        case SlaveID6:
+            adcAddress = kADC128D818_SlaveAddress6;
+            break;
+        default:
+            adcAddress = kADC128D818_SlaveAddress7;
+            break;
+    }
+
+    return adcAddress;
+}
+
+// ----------------------------------------------------------------------------
+int IOModADCInit(uint8_t inSlaveID)
+{
+    // Get the slave ADC address.
+    gADCI2CAddressTable[inSlaveID] = IOModGetADCAddress(inSlaveID);
+    // Initialize ADC.
+    mIOModValidateStatus(ADC128D818Init(gADCI2CAddressTable[inSlaveID]));
+    // Start ADC continuous conversions.
+    mIOModValidateStatus(ADC128D818StartConversion(gADCI2CAddressTable[inSlaveID], kADC128D818_ConversionRate_Continuous));
+
+    // If we make it this far, its a success.
+    return 0;
+}
+
+// ----------------------------------------------------------------------------
+int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
+{
+    // TODO: Somehow from config determine on which channels are the temp sensors.
+
+    int32_t temperature = 0;
+    uint16_t adcRawData;
+
+    mIOModValidateStatus(ADC128D818ReadChannel(gADCI2CAddressTable[inSlaveID], inChannelIdx, &adcRawData));
+
+    // Convert thermistor value.
+    if (!USP10973BetaComputeTemperature(adcRawData, &temperature))
+    {
+        gIOMod.io[inChannelIdx].status = kIOMod_Status_InvalidRange;
+    }
+    else
+    {
+        gIOMod.io[inChannelIdx].status = kIOMod_Status_Valid;
+        *outADCData = temperature;
+    }
+
+    // If we make it this far, its a success.
+    return 0;
+}
