@@ -169,17 +169,51 @@ typedef struct
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
-void MenuDebugLog(void);
+int LCDSetup(void);
+///
+uint16_t LCDGetWidth(void);
+///
+uint16_t LCDGetHeight(void);
+///
+void LCDPutPixel(int16_t x, int16_t y, uint16_t inColor);
+///
+void LCDDisplayOn(void);
+///
+void LCDDisplayOff(void);
+///
+void LCDSetTextWrapping(uint8_t wrap_mode);
+///
+void LCDSetColors(uint16_t foreground, uint16_t background);
+///
+void LCDGetColors(uint16_t* outForeground, uint16_t* outBackground);
+///
+void LCDSetFontColor(uint16_t color);
+///
+void LCDSetBackgroundColor(uint16_t Color);
+///
+void LCDSetFont(uint8_t font);
+///
+fonts_t* LCDGetFont(void);
+///
+uint16_t LCDGetFontWidth(void);
+///
+uint16_t LCDGetFontHeight(void);
+///
+void LCDPutChar(uint16_t x, uint16_t y, char c);
+///
+void LCDPutText(uint16_t inColumn, uint16_t inLine, const char* inTextPointer);
+///
+void LCDAppendText(char* text_ptr);
+///
+void LCDSetTextStartPosition(uint16_t col_offset, uint16_t line);
+///
+void LCDDrawMonoImage(const uint32_t* pict);
 ///
 void LCDDrawBMP(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, uint16_t inXOffset, uint16_t inYOffset);
 ///
 void LCDDrawImage(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, uint16_t inXOffset, uint16_t inYOffset);
 ///
 void LCDDrawFade(uint16_t inColor);
-///
-int LCDSetup(void);
-///
-uint16_t LCDReadID(void);
 ///
 void LCDFillScreen(uint16_t Color);
 ///
@@ -198,40 +232,6 @@ void LCDDrawCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inC
 void LCDDrawFullCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inForeground, uint16_t inBackground);
 ///
 void LCDDrawFullCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color);
-///
-uint16_t LCDGetWidth(void);
-///
-uint16_t LCDGetHeight(void);
-///
-void LCDSetTextWrapping(uint8_t wrap_mode);
-///
-void LCDSetColors(uint16_t foreground, uint16_t background);
-///
-void LCDGetColors(uint16_t* outForeground, uint16_t* outBackground);
-///
-void LCDSetFontColor(uint16_t color);
-///
-void LCDSetBackgroundColor(uint16_t Color);
-///
-void LCDSetFont(uint8_t font);
-///
-fonts_t* LCDGetFont(void);
-///
-void LCDPutChar(uint16_t x, uint16_t y, char c);
-///
-void LCDPutText(uint16_t col_offset, uint16_t line, const char* text_ptr);
-///
-void LCDAppendText(char* text_ptr);
-///
-void LCDSetTextStartPosition(uint16_t col_offset, uint16_t line);
-///
-void LCDDRawMonoImage(const uint32_t* pict);
-///
-void LCDPutPixel(int16_t x, int16_t y, uint16_t inColor);
-///
-void LCDDisplayOn(void);
-///
-void LCDDisplayOff(void);
 
 #endif // LCD_H_
 

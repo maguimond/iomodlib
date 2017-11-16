@@ -27,16 +27,7 @@ static lcd_t gLCD;
 static TextBox_t gTextBox;
 
 // ----------------------------------------------------------------------------
-void MenuDebugLog(void)
-{
-    LCDSetColors(kLCDColor_White, kLCDColor_Black);
-    LCDClearScreen();
-    LCDSetFont(FONT_7X10);
-    LCDDataLoggerEnableDisplay(true);
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetOrientation(uint8_t inOrientation)
+static void LCDSetOrientation(uint8_t inOrientation)
 {
     gLCD.orientation = inOrientation;
 
@@ -74,6 +65,285 @@ void LCDSetOrientation(uint8_t inOrientation)
         {
             // TODO: Error.
             break;
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+int LCDSetup(void)
+{
+    int status = mLCDDriverSetup(kLCDWidth, kLCDHeight);
+
+    if (status == 0)
+    {
+        // Apply background default settings.
+        LCDSetColors(kLCDColor_White, kLCDColor_Black);
+        LCDSetOrientation(kLCDOrientation_Landscape1);
+        LCDClearScreen();
+        // Apply test default settings.
+        LCDSetTextWrapping(kLCDTextWrapping_Word);
+        LCDSetFont(FONT_7X10);
+    }
+    else
+    {
+        status = -1;
+    }
+
+    return status;
+}
+
+// ----------------------------------------------------------------------------
+uint16_t LCDGetWidth(void)
+{
+    return gLCD.width;
+}
+
+// ----------------------------------------------------------------------------
+uint16_t LCDGetHeight(void)
+{
+    return gLCD.height;
+}
+
+// ----------------------------------------------------------------------------
+void LCDPutPixel(int16_t x, int16_t y, uint16_t inColor)
+{
+    mLCDSetCursor(x, y);
+    mLCDAccessGRAM();
+    mLCDWriteData(inColor);
+}
+
+// ----------------------------------------------------------------------------
+//TODO: lcd_display_on
+void LCDDisplayOn(void)
+{
+
+}
+
+// ----------------------------------------------------------------------------
+//TODO: lcd_display_off
+void LCDDisplayOff(void)
+{
+
+}
+
+// ----------------------------------------------------------------------------
+void LCDSetTextWrapping(uint8_t wrap_mode)
+{
+    gLCD.textWrap = wrap_mode;
+}
+
+// ----------------------------------------------------------------------------
+void LCDSetColors(uint16_t foreground, uint16_t background)
+{
+    gLCD.foreground = foreground;
+    gLCD.background = background;
+}
+
+// ----------------------------------------------------------------------------
+void LCDGetColors(uint16_t* outForeground, uint16_t* outBackground)
+{
+    *outForeground = gLCD.foreground; *outBackground = gLCD.background;
+}
+
+// ----------------------------------------------------------------------------
+void LCDSetFontColor(uint16_t color)
+{
+    gLCD.foreground = color;
+}
+
+// ----------------------------------------------------------------------------
+void LCDSetBackgroundColor(uint16_t color)
+{
+    gLCD.background = color;
+}
+
+// ----------------------------------------------------------------------------
+void LCDSetFont(uint8_t inFont)
+{
+    switch (inFont)
+    {
+        case FONT_7X10:
+            gLCD.font = &font7x10;
+            break;
+        case FONT_8X8:
+                gLCD.font = &font8x8;
+                break;
+        case FONT_8X12:
+                gLCD.font = &font8x12;
+                break;
+        case FONT_11X18:
+                gLCD.font = &font11x18;
+                break;
+        case FONT_12X12:
+                gLCD.font = &font12x12;
+                break;
+        case FONT_16X24:
+                gLCD.font = &font16x24;
+                break;
+        case FONT_16X26:
+                gLCD.font = &font16x26;
+                break;
+        default:
+            break;
+    }
+}
+
+// ----------------------------------------------------------------------------
+fonts_t* LCDGetFont(void)
+{
+    return gLCD.font;
+}
+
+// ----------------------------------------------------------------------------
+uint16_t LCDGetFontWidth(void)
+{
+    return gLCD.font->width;
+}
+
+// ----------------------------------------------------------------------------
+uint16_t LCDGetFontHeight(void)
+{
+    return gLCD.font->height;
+}
+
+// ----------------------------------------------------------------------------
+void LCDPutChar(uint16_t x, uint16_t y, char c)
+{
+    // Set coordinates
+    gTextBox.cursorX = x;
+    gTextBox.cursorY = y;
+
+    if ((gTextBox.cursorY + gLCD.font->height) > gLCD.height)
+    {   // If at bottom of display, go to start position
+        gTextBox.cursorX = gTextBox.startPosX;
+        gTextBox.cursorY = gTextBox.startPosY;
+        LCDClearScreen();
+    }
+
+    uint8_t hIndex;
+    uint16_t char_line = 0;
+    mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY);
+    for (hIndex = 0; hIndex < gLCD.font->height; hIndex ++)
+    {
+        uint16_t char_row_mask = gLCD.font->table[(c - 32) * gLCD.font->height + hIndex];
+        uint16_t vIndex;
+        mLCDAccessGRAM();
+        for (vIndex = 0; vIndex < gLCD.font->width; vIndex ++)
+        {
+            if ((char_row_mask << vIndex) & 0x8000)
+            {
+                mLCDWriteData(gLCD.foreground);
+            }
+            else
+            {
+                mLCDWriteData(gLCD.background);
+            }
+        }
+        char_line ++;
+        mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY + char_line);
+    }
+}
+
+// ----------------------------------------------------------------------------
+void LCDPutText(uint16_t inColumn, uint16_t inLine, const char* inTextPointer)
+{
+    gTextBox.cursorX = inColumn;
+    gTextBox.cursorY = inLine;
+
+    // Send the string character by character on lCD.
+    while (*inTextPointer != 0)
+    {
+        if (*inTextPointer == '\r')
+        {
+            // Return.
+            gTextBox.cursorX = gTextBox.startPosX;
+            inTextPointer ++;
+            continue;
+        }
+        else if (*inTextPointer == '\n')
+        {
+            // New line.
+            gTextBox.cursorY += gLCD.font->height;
+            gTextBox.cursorX = gTextBox.startPosX;
+            inTextPointer ++;
+            continue;
+        }
+
+        if (gLCD.textWrap == kLCDTextWrapping_Character)
+        {
+            if ((gTextBox.cursorX + gLCD.font->width) > gLCD.width)
+            {
+                // Wrap on character screen width overflow.
+                gTextBox.cursorX = gTextBox.startPosX;
+                gTextBox.cursorY += gLCD.font->height;
+                if (*inTextPointer == ' ')
+                {
+                    // Skip overflow on space.
+                    inTextPointer ++;
+                    continue;
+                }
+            }
+        }
+        else
+        {
+            // Wrap on word.
+            uint8_t str_char_nb;
+            // Count characters in a word.
+            for (str_char_nb = 1; (*(inTextPointer + str_char_nb) != ' ') && (*(inTextPointer + str_char_nb) != '\0') &&
+                                  (*(inTextPointer + str_char_nb) != '\r') && (*(inTextPointer + str_char_nb) != '\n'); str_char_nb ++);
+
+            if (gTextBox.cursorX + str_char_nb * gLCD.font->width > gLCD.width)
+            {
+                // Wrap on word screen width overflow.
+                gTextBox.cursorX = gTextBox.startPosX;
+                gTextBox.cursorY += gLCD.font->height;
+                if (*inTextPointer == ' ')
+                {
+                    // Skip new line starting with space.
+                    inTextPointer ++;
+                    continue;
+                }
+            }
+        }
+
+        // Display one character on LCD and point to next character.
+        LCDPutChar(gTextBox.cursorX, gTextBox.cursorY, *inTextPointer ++);
+        // Increment horizontal position for next character.
+        gTextBox.cursorX += gLCD.font->width;
+    }
+}
+
+// ----------------------------------------------------------------------------
+void LCDAppendText(char* inTextPointer)
+{
+    LCDPutText(gTextBox.cursorX, gTextBox.cursorY, inTextPointer);
+}
+
+// ----------------------------------------------------------------------------
+void LCDSetTextStartPosition(uint16_t inColumn, uint16_t inLine)
+{
+    gTextBox.startPosX = gTextBox.cursorX = inColumn;
+    gTextBox.startPosY = gTextBox.cursorY = inLine;
+}
+
+// ----------------------------------------------------------------------------
+void LCDDrawMonoImage(const uint32_t *pict)
+{
+    uint32_t index = 0, i = 0;
+    mLCDSetCursor(0, (gLCD.width - 1));
+    mLCDAccessGRAM();
+    for (index = 0; index < 2400; index++)
+    {
+        for (i = 0; i < 32; i++)
+        {
+            if ((pict[index] & (1 << i)) == 0x00)
+            {
+                mLCDWriteData(gLCD.background);
+            }
+            else
+            {
+                mLCDWriteData(gLCD.foreground);
+            }
         }
     }
 }
@@ -124,29 +394,6 @@ void LCDDrawFade(uint16_t inColor)
 }
 
 // ----------------------------------------------------------------------------
-int LCDSetup(void)
-{
-    int status = mLCDDriverSetup(kLCDWidth, kLCDHeight);
-
-    if (status == 0)
-    {
-        // Apply background default settings.
-        LCDSetColors(kLCDColor_White, kLCDColor_Black);
-        LCDSetOrientation(kLCDOrientation_Landscape1);
-        LCDClearScreen();
-        // Apply test default settings.
-        LCDSetTextWrapping(kLCDTextWrapping_Word);
-        LCDSetFont(FONT_7X10);
-    }
-    else
-    {
-        status = -1;
-    }
-
-    return status;
-}
-
-// ----------------------------------------------------------------------------
 void LCDFillScreen(uint16_t inColor)
 {
     mLCDSetCursor(0, 0);
@@ -169,13 +416,13 @@ void LCDClearScreen(void)
 }
 
 // ----------------------------------------------------------------------------
-void LCDClearLine(uint16_t line, uint8_t line_with)
+void LCDClearLine(uint16_t inLine, uint8_t inLineWidth)
 {
-    uint16_t ref_line = line;
+    uint16_t ref_line = inLine;
     do
     {
         LCDDrawLine(0, ref_line, gLCD.width, kLCDDirection_Horizontal, gLCD.background);
-    } while (++ ref_line < line_with);
+    } while (++ ref_line < inLineWidth);
 }
 
 // ----------------------------------------------------------------------------
@@ -301,241 +548,3 @@ void LCDDrawFullCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornerna
         }
     }
 }
-
-// ----------------------------------------------------------------------------
-uint16_t LCDGetWidth(void)
-{
-    return gLCD.width;
-}
-
-// ----------------------------------------------------------------------------
-uint16_t LCDGetHeight(void)
-{
-    return gLCD.height;
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetTextWrapping(uint8_t wrap_mode)
-{
-    gLCD.textWrap = wrap_mode;
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetColors(uint16_t foreground, uint16_t background)
-{
-    gLCD.foreground = foreground;
-    gLCD.background = background;
-}
-
-// ----------------------------------------------------------------------------
-void LCDGetColors(uint16_t* outForeground, uint16_t* outBackground)
-{
-    *outForeground = gLCD.foreground; *outBackground = gLCD.background;
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetFontColor(uint16_t color)
-{
-    gLCD.foreground = color;
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetBackgroundColor(uint16_t color)
-{
-    gLCD.background = color;
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetFont(uint8_t inFont)
-{
-    switch (inFont)
-    {
-        case FONT_7X10:
-            gLCD.font = &font7x10;
-            break;
-        case FONT_8X8:
-                gLCD.font = &font8x8;
-                break;
-        case FONT_8X12:
-                gLCD.font = &font8x12;
-                break;
-        case FONT_11X18:
-                gLCD.font = &font11x18;
-                break;
-        case FONT_12X12:
-                gLCD.font = &font12x12;
-                break;
-        case FONT_16X24:
-                gLCD.font = &font16x24;
-                break;
-        case FONT_16X26:
-                gLCD.font = &font16x26;
-                break;
-        default:
-            break;
-    }
-}
-
-// ----------------------------------------------------------------------------
-fonts_t* LCDGetFont(void)
-{
-    return gLCD.font;
-}
-
-// ----------------------------------------------------------------------------
-void LCDPutChar(uint16_t x, uint16_t y, char c)
-{
-    // Set coordinates
-    gTextBox.cursorX = x;
-    gTextBox.cursorY = y;
-
-    if ((gTextBox.cursorY + gLCD.font->height) > gLCD.height)
-    {   // If at bottom of display, go to start position
-        gTextBox.cursorX = gTextBox.startPosX;
-        gTextBox.cursorY = gTextBox.startPosY;
-        LCDClearScreen();
-    }
-
-    uint8_t hIndex;
-    uint16_t char_line = 0;
-    mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY);
-    for (hIndex = 0; hIndex < gLCD.font->height; hIndex ++)
-    {
-        uint16_t char_row_mask = gLCD.font->table[(c - 32) * gLCD.font->height + hIndex];
-        uint16_t vIndex;
-        mLCDAccessGRAM();
-        for (vIndex = 0; vIndex < gLCD.font->width; vIndex ++)
-        {
-            if ((char_row_mask << vIndex) & 0x8000)
-            {
-                mLCDWriteData(gLCD.foreground);
-            }
-            else
-            {
-                mLCDWriteData(gLCD.background);
-            }
-        }
-        char_line ++;
-        mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY + char_line);
-    }
-}
-
-// ----------------------------------------------------------------------------
-void LCDPutText(uint16_t col_offset, uint16_t line, const char* inTextPtr)
-{
-    gTextBox.cursorX = col_offset;
-    gTextBox.cursorY = line;
-
-    // Send the string character by character on lCD
-    while (*inTextPtr != 0)
-    {
-        if (*inTextPtr == '\r')
-        {   // Return
-            gTextBox.cursorX = gTextBox.startPosX;
-            inTextPtr ++;
-            continue;
-        }
-        else if (*inTextPtr == '\n')
-        {   // New line
-            gTextBox.cursorY += gLCD.font->height;
-            gTextBox.cursorX = gTextBox.startPosX;
-            inTextPtr ++;
-            continue;
-        }
-
-        if (gLCD.textWrap == kLCDTextWrapping_Character)
-        {
-            if ((gTextBox.cursorX + gLCD.font->width) > gLCD.width)
-            {   // Wrap on character screen width overflow
-                gTextBox.cursorX = gTextBox.startPosX;
-                gTextBox.cursorY += gLCD.font->height;
-                if (*inTextPtr == ' ')
-                {   // Skip overflow on space
-                    inTextPtr ++;
-                    continue;
-                }
-            }
-        }
-        else
-        {   // Wrap on word
-            uint8_t str_char_nb;
-            // Count characters in a word
-            for (str_char_nb = 1; (*(inTextPtr + str_char_nb) != ' ') && (*(inTextPtr + str_char_nb) != '\0') &&
-                                  (*(inTextPtr + str_char_nb) != '\r') && (*(inTextPtr + str_char_nb) != '\n'); str_char_nb ++);
-
-            if (gTextBox.cursorX + str_char_nb * gLCD.font->width > gLCD.width)
-            {   // Wrap on word screen width overflow
-                gTextBox.cursorX = gTextBox.startPosX;
-                gTextBox.cursorY += gLCD.font->height;
-                if (*inTextPtr == ' ')
-                {   // Skip new line starting with space
-                    inTextPtr ++;
-                    continue;
-                }
-            }
-        }
-
-        // Display one character on LCD and point to next character
-        LCDPutChar(gTextBox.cursorX, gTextBox.cursorY, *inTextPtr ++);
-        // Increment horizontal position for next character
-        gTextBox.cursorX += gLCD.font->width;
-    }
-}
-
-// ----------------------------------------------------------------------------
-void LCDAppendText(char* inTextPtr)
-{
-    LCDPutText(gTextBox.cursorX, gTextBox.cursorY, inTextPtr);
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetTextStartPosition(uint16_t col_offset, uint16_t line)
-{
-    gTextBox.startPosX = gTextBox.cursorX = col_offset;
-    gTextBox.startPosY = gTextBox.cursorY = line;
-}
-
-// ----------------------------------------------------------------------------
-void LCDDrawMonoImage(const uint32_t *pict)
-{
-    uint32_t index = 0, i = 0;
-    mLCDSetCursor(0, (gLCD.width - 1));
-    mLCDAccessGRAM();
-    for (index = 0; index < 2400; index++)
-    {
-        for (i = 0; i < 32; i++)
-        {
-            if ((pict[index] & (1 << i)) == 0x00)
-            {
-                mLCDWriteData(gLCD.background);
-            }
-            else
-            {
-                mLCDWriteData(gLCD.foreground);
-            }
-        }
-    }
-}
-
-// ----------------------------------------------------------------------------
-void LCDPutPixel(int16_t x, int16_t y, uint16_t inColor)
-{
-    mLCDSetCursor(x, y);
-    mLCDAccessGRAM();
-    mLCDWriteData(inColor);
-}
-
-// ----------------------------------------------------------------------------
-//TODO: lcd_display_on
-void LCDDisplayOn(void)
-{
-
-}
-
-// ----------------------------------------------------------------------------
-//TODO: lcd_display_off
-void LCDDisplayOff(void)
-{
-
-}
-
