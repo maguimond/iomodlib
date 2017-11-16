@@ -22,7 +22,7 @@
 
 // Drivers includes.
 #include "adc128d818.h"
-#include "USP10973.h"
+#include "usp10973.h"
 
 // ----------------------------------------------------------------------------
 // Private variables.
