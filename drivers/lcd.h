@@ -10,23 +10,27 @@
 #ifndef LCD_H_
 #define LCD_H_
 
+#include "iomodconfig.h"
 #include "fonts.h"
+
+#if LCDDriverUseILI9325 == 1
+    #include "ili9325.h"
+    #include "fsmc.h"
+#endif
+#if LCDDriverUseILI9341 == 1
+    #include "ili9341.h"
+    #include "fsmc.h"
+#endif
 
 // ----------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------
 
-// Supported LCD drivers.
-#define kLCDDriver_ILI9325 0x9325
-#define kLCDDriver_ILI9328 0x9328
-#define kLCDDriver_ILI9341 0x9341
-#define kLCDDriver_SSD2119 0x2119
-
-// LCD Size
+// LCD Size.
 #define kLCDWidth 240
 #define kLCDHeight 320
 
-// LCD colors
+// LCD colors.
 #define kLCDColor_Black 0x0000
 #define kLCDColor_Brown 0xBBCA
 #define kLCDColor_Blue 0x001F
@@ -45,165 +49,6 @@
 #define kLCDColor_Grey 0xF7DE
 #define kLCDColor_Grey2 0x7BEF
 #define kLCDColor_White 0xFFFF
-
-#define kLCDDelay 0xFF
-
-// ILI9325 registers.
-typedef enum
-{
-    kLCDRegister_ILI9325_START_OSC = 0x00,
-    kLCDRegister_ILI9325_DRIV_OUT_CTRL = 0x01,
-    kLCDRegister_ILI9325_DRIV_WAV_CTRL = 0x02,
-    kLCDRegister_ILI9325_ENTRY_MOD = 0x03,
-    kLCDRegister_ILI9325_RESIZE_CTRL = 0x04,
-    kLCDRegister_ILI9325_DISP_CTRL1 = 0x07,
-    kLCDRegister_ILI9325_DISP_CTRL2 = 0x08,
-    kLCDRegister_ILI9325_DISP_CTRL3 = 0x09,
-    kLCDRegister_ILI9325_DISP_CTRL4 = 0x0A,
-    kLCDRegister_ILI9325_RGB_DISP_IF_CTRL1 = 0x0C,
-    kLCDRegister_ILI9325_FRM_MARKER_POS = 0x0D,
-    kLCDRegister_ILI9325_RGB_DISP_IF_CTRL2 = 0x0F,
-    kLCDRegister_ILI9325_POW_CTRL1 = 0x10,
-    kLCDRegister_ILI9325_POW_CTRL2 = 0x11,
-    kLCDRegister_ILI9325_POW_CTRL3 = 0x12,
-    kLCDRegister_ILI9325_POW_CTRL4 = 0x13,
-    kLCDRegister_ILI9325_GRAM_HOR_AD = 0x20,
-    kLCDRegister_ILI9325_GRAM_VER_AD = 0x21,
-    kLCDRegister_ILI9325_RW_GRAM = 0x22,
-    kLCDRegister_ILI9325_POW_CTRL7 = 0x29,
-    kLCDRegister_ILI9325_FRM_RATE_COL_CTRL = 0x2B,
-    kLCDRegister_ILI9325_GAMMA_CTRL1 = 0x30,
-    kLCDRegister_ILI9325_GAMMA_CTRL2 = 0x31,
-    kLCDRegister_ILI9325_GAMMA_CTRL3 = 0x32,
-    kLCDRegister_ILI9325_GAMMA_CTRL4 = 0x35,
-    kLCDRegister_ILI9325_GAMMA_CTRL5 = 0x36,
-    kLCDRegister_ILI9325_GAMMA_CTRL6 = 0x37,
-    kLCDRegister_ILI9325_GAMMA_CTRL7 = 0x38,
-    kLCDRegister_ILI9325_GAMMA_CTRL8 = 0x39,
-    kLCDRegister_ILI9325_GAMMA_CTRL9 = 0x3C,
-    kLCDRegister_ILI9325_GAMMA_CTRL10 = 0x3D,
-    kLCDRegister_ILI9325_HOR_START_AD = 0x50,
-    kLCDRegister_ILI9325_HOR_END_AD = 0x51,
-    kLCDRegister_ILI9325_VER_START_AD = 0x52,
-    kLCDRegister_ILI9325_VER_END_AD = 0x53,
-    kLCDRegister_ILI9325_GATE_SCAN_CTRL1 = 0x60,
-    kLCDRegister_ILI9325_GATE_SCAN_CTRL2 = 0x61,
-    kLCDRegister_ILI9325_GATE_SCAN_CTRL3 = 0x6A,
-    kLCDRegister_ILI9325_PART_IMG1_DISP_POS = 0x80,
-    kLCDRegister_ILI9325_PART_IMG1_START_AD = 0x81,
-    kLCDRegister_ILI9325_PART_IMG1_END_AD = 0x82,
-    kLCDRegister_ILI9325_PART_IMG2_DISP_POS = 0x83,
-    kLCDRegister_ILI9325_PART_IMG2_START_AD = 0x84,
-    kLCDRegister_ILI9325_PART_IMG2_END_AD = 0x85,
-    kLCDRegister_ILI9325_PANEL_IF_CTRL1 = 0x90,
-    kLCDRegister_ILI9325_PANEL_IF_CTRL2 = 0x92,
-    kLCDRegister_ILI9325_PANEL_IF_CTRL3 = 0x93,
-    kLCDRegister_ILI9325_PANEL_IF_CTRL4 = 0x95,
-    kLCDRegister_ILI9325_PANEL_IF_CTRL5 = 0x97,
-    kLCDRegister_ILI9325_PANEL_IF_CTRL6 = 0x98,
-} kLCDRegister_ILI9325_t;
-
-#define kLCDRegister_ILI9325_ENTRY_OR1 0x0030
-#define kLCDRegister_ILI9325_ENTRY_OR2 0x0028
-#define kLCDRegister_ILI9325_ENTRY_OR3 0x0000
-#define kLCDRegister_ILI9325_ENTRY_OR4 0x0018
-#define kLCDRegister_ILI9325_ENTRY_RGB 0x0000
-#define kLCDRegister_ILI9325_ENTRY_BGR 0x1000
-
-// ILI9341 registers.
-typedef enum
-{
-    kLCDRegister_ILI9341_SOFTRESET = 0x01,
-    kLCDRegister_ILI9341_SLEEPIN = 0x10,
-    kLCDRegister_ILI9341_SLEEPOUT = 0x11,
-    kLCDRegister_ILI9341_NORMALDISP = 0x13,
-    kLCDRegister_ILI9341_INVERTOFF = 0x20,
-    kLCDRegister_ILI9341_INVERTON = 0x21,
-    kLCDRegister_ILI9341_GAMMASET = 0x26,
-    kLCDRegister_ILI9341_DISPLAYOFF = 0x28,
-    kLCDRegister_ILI9341_DISPLAYON = 0x29,
-    kLCDRegister_ILI9341_COLADDRSET = 0x2A,
-    kLCDRegister_ILI9341_PAGEADDRSET = 0x2B,
-    kLCDRegister_ILI9341_MEMORYWRITE = 0x2C,
-    kLCDRegister_ILI9341_MEMCONTROL = 0x36,
-    kLCDRegister_ILI9341_PIXELFORMAT = 0x3A,
-    kLCDRegister_ILI9341_FRAMECONTROL = 0xB1,
-    kLCDRegister_ILI9341_DISPLAYFUNC = 0xB6,
-    kLCDRegister_ILI9341_ENTRYMODE = 0xB7,
-    kLCDRegister_ILI9341_POWERCONTROL1 = 0xC0,
-    kLCDRegister_ILI9341_POWERCONTROL2 = 0xC1,
-    kLCDRegister_ILI9341_VCOMCONTROL1 = 0xC5,
-    kLCDRegister_ILI9341_VCOMCONTROL2 = 0xC7,
-    kLCDRegister_ILI9341_ReadID4 = 0xD3,
-} kLCDRegister_ILI9341_t;
-
-#define kLCDRegister_ILI9341_MADCTL 0x36
-#define kLCDRegister_ILI9341_MADCTL_MY 0x80
-#define kLCDRegister_ILI9341_MADCTL_MX 0x40
-#define kLCDRegister_ILI9341_MADCTL_MV 0x20
-#define kLCDRegister_ILI9341_MADCTL_ML 0x10
-#define kLCDRegister_ILI9341_MADCTL_RGB 0x00
-#define kLCDRegister_ILI9341_MADCTL_BGR 0x08
-#define kLCDRegister_ILI9341_MADCTL_MH 0x04
-
-// HX8347G registers.
-typedef enum
-{
-    kLCDRegister_HX8347G_COLADDRSTART_HI = 0x02,
-    kLCDRegister_HX8347G_COLADDRSTART_LO = 0x03,
-    kLCDRegister_HX8347G_COLADDREND_HI = 0x04,
-    kLCDRegister_HX8347G_COLADDREND_LO = 0x05,
-    kLCDRegister_HX8347G_ROWADDRSTART_HI = 0x06,
-    kLCDRegister_HX8347G_ROWADDRSTART_LO = 0x07,
-    kLCDRegister_HX8347G_ROWADDREND_HI = 0x08,
-    kLCDRegister_HX8347G_ROWADDREND_LO = 0x09,
-    kLCDRegister_HX8347G_MEMACCESS = 0x16,
-} kLCDRegister_HX8347G_t;
-
-// SD2119 registers.
-typedef enum
-{
-    kLCDRegister_SSD2119_DEVICE_CODE_READ_REG = 0x00,
-    kLCDRegister_SSD2119_OSC_START_REG = 0x00,
-    kLCDRegister_SSD2119_OUTPUT_CTRL_REG = 0x01,
-    kLCDRegister_SSD2119_LCD_DRIVE_AC_CTRL_REG = 0x02,
-    kLCDRegister_SSD2119_PWR_CTRL_1_REG = 0x03,
-    kLCDRegister_SSD2119_DISPLAY_CTRL_REG = 0x07,
-    kLCDRegister_SSD2119_FRAME_CYCLE_CTRL_REG = 0x0B,
-    kLCDRegister_SSD2119_PWR_CTRL_2_REG = 0x0C,
-    kLCDRegister_SSD2119_PWR_CTRL_3_REG = 0x0D,
-    kLCDRegister_SSD2119_PWR_CTRL_4_REG = 0x0E,
-    kLCDRegister_SSD2119_GATE_SCAN_START_REG = 0x0F,
-    kLCDRegister_SSD2119_SLEEP_MODE_1_REG = 0x10,
-    kLCDRegister_SSD2119_ENTRY_MODE_REG = 0x11,
-    kLCDRegister_SSD2119_SLEEP_MODE_2_REG = 0x12,
-    kLCDRegister_SSD2119_GEN_IF_CTRL_REG = 0x15,
-    kLCDRegister_SSD2119_PWR_CTRL_5_REG = 0x1E,
-    kLCDRegister_SSD2119_RAM_DATA_REG = 0x22,
-    kLCDRegister_SSD2119_FRAME_FREQ_REG = 0x25,
-    kLCDRegister_SSD2119_ANALOG_SET_REG = 0x26,
-    kLCDRegister_SSD2119_VCOM_OTP_1_REG = 0x28,
-    kLCDRegister_SSD2119_VCOM_OTP_2_REG = 0x29,
-    kLCDRegister_SSD2119_GAMMA_CTRL_1_REG = 0x30,
-    kLCDRegister_SSD2119_GAMMA_CTRL_2_REG = 0x31,
-    kLCDRegister_SSD2119_GAMMA_CTRL_3_REG = 0x32,
-    kLCDRegister_SSD2119_GAMMA_CTRL_4_REG = 0x33,
-    kLCDRegister_SSD2119_GAMMA_CTRL_5_REG = 0x34,
-    kLCDRegister_SSD2119_GAMMA_CTRL_6_REG = 0x35,
-    kLCDRegister_SSD2119_GAMMA_CTRL_7_REG = 0x36,
-    kLCDRegister_SSD2119_GAMMA_CTRL_8_REG = 0x37,
-    kLCDRegister_SSD2119_GAMMA_CTRL_9_REG = 0x3A,
-    kLCDRegister_SSD2119_GAMMA_CTRL_10_REG = 0x3B,
-    kLCDRegister_SSD2119_V_RAM_POS_REG = 0x44,
-    kLCDRegister_SSD2119_H_RAM_START_REG = 0x45,
-    kLCDRegister_SSD2119_H_RAM_END_REG = 0x46,
-    kLCDRegister_SSD2119_X_RAM_ADDR_REG = 0x4E,
-    kLCDRegister_SSD2119_Y_RAM_ADDR_REG = 0x4F,
-} kLCDRegister_SSD2119_t;
-
-#define kLCDRegister_SSD2119_ENTRY_MODE_DEFAULT 0x6830
-#define kLCDRegister_SSD2119_ENTRY_MODE_BMP 0x6810
-#define kLCDRegister_SSD2119_MAKE_ENTRY_MODE(x)  ((kLCDRegister_SSD2119_ENTRY_MODE_DEFAULT & 0xFF00) | (x))
 
 // LCD Direction
 typedef enum
@@ -298,9 +143,33 @@ typedef struct
 // ----------------------------------------------------------------------------
 #define LCDGetRGB565(R, G, B) ((((R)& 0xF8) << 8) | (((G) & 0xFC) << 3) | (((B) & 0xF8) >> 3))
 
+#if LCDDriverUseILI9325 == 1
+#define mLCDDriverSetup(inWidth, inHeight) ILI9325Setup(inWidth, inHeight)
+#define mLCDSetCursor() ILI9325SetCursor(inPositonX, inPositonY)
+#define mLCDSetPortrait1() ILI9325SetPortrait1()
+#define mLCDSetLandscape1() ILI9325SetLandscape1()
+#define mLCDSetPortrait2() ILI9325SetPortrait2()
+#define mLCDSetLandscape2() ILI9325SetLandscape2()
+#define mLCDAccessGRAM() (mFSMCWriteRegister(kLCDRegister_ILI9325_RW_GRAM))
+#define mLCDWriteData(inData) mFSMCWriteData(inData)
+#endif
+
+#if LCDDriverUseILI9341 == 1
+#define mLCDDriverSetup(inWidth, inHeight) ILI9341Setup(inWidth, inHeight)
+#define mLCDSetCursor(inPositonX, inPositonY) ILI9341SetCursor(inPositonX, inPositonY)
+#define mLCDSetPortrait1() ILI9341SetPortrait1()
+#define mLCDSetLandscape1() ILI9341SetLandscape1()
+#define mLCDSetPortrait2() ILI9341SetPortrait2()
+#define mLCDSetLandscape2() ILI9341SetLandscape2()
+#define mLCDAccessGRAM() (mFSMCWriteRegister(kLCDRegister_ILI9341_MEMORYWRITE))
+#define mLCDWriteData(inData) mFSMCWriteData(inData)
+#endif
+
 // ----------------------------------------------------------------------------
 // Function prototypes
 // ----------------------------------------------------------------------------
+///
+void MenuDebugLog(void);
 ///
 void LCDDrawBMP(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, uint16_t inXOffset, uint16_t inYOffset);
 ///
@@ -308,7 +177,7 @@ void LCDDrawImage(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, 
 ///
 void LCDDrawFade(uint16_t inColor);
 ///
-uint16_t LCDSetup(void);
+int LCDSetup(void);
 ///
 uint16_t LCDReadID(void);
 ///
@@ -357,10 +226,12 @@ void LCDAppendText(char* text_ptr);
 void LCDSetTextStartPosition(uint16_t col_offset, uint16_t line);
 ///
 void LCDDRawMonoImage(const uint32_t* pict);
-void lcd_write_bmp(uint32_t bmp_addr);
-void lcd_put_pixel(int16_t x, int16_t y, uint16_t inColor);
-void lcd_display_on(void);
-void lcd_display_off(void);
+///
+void LCDPutPixel(int16_t x, int16_t y, uint16_t inColor);
+///
+void LCDDisplayOn(void);
+///
+void LCDDisplayOff(void);
 
 #endif // LCD_H_
 
