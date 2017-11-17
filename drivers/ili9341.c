@@ -23,10 +23,6 @@
 #define mLCDReadData() mFSMCReadData()
 
 // ----------------------------------------------------------------------------
-// Private variables.
-ILI9341_t gILI9341;
-
-// ----------------------------------------------------------------------------
 static void LCDSetRegisters(void)
 {
     mLCDWriteRegister(kLCDRegister_ILI9341_SOFTRESET);
@@ -87,11 +83,8 @@ static uint16_t ILI9341ReadID(void)
 }
 
 // ----------------------------------------------------------------------------
-int ILI9341Setup(uint16_t inWidth, uint16_t inHeight)
+int ILI9341Setup(void)
 {
-    gILI9341.width = inWidth;
-    gILI9341.height = inHeight;
-
     int status = 0;
 
     // TODO: Setup like in BLE HAL.
@@ -115,47 +108,47 @@ int ILI9341Setup(uint16_t inWidth, uint16_t inHeight)
 }
 
 // ----------------------------------------------------------------------------
-void ILI9341SetCursor(uint16_t inPositonX, uint16_t inPositonY)
+void ILI9341SetCursor(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight)
 {
-    ILI9341SetAddressWindows(inPositonX, inPositonY, gILI9341.width - 1, gILI9341.height - 1);
+    ILI9341SetAddressWindows(inPositionX, inPositionY, inWidth - 1, inHeight - 1);
 }
 
 // ----------------------------------------------------------------------------
-void ILI9341SetPortrait1(void)
+void ILI9341SetPortrait1(uint16_t inWidth, uint16_t inHeight)
 {
     mLCDWriteRegister(kLCDRegister_ILI9341_MEMCONTROL);
     mLCDWriteData(kLCDRegister_ILI9341_MADCTL_ML | kLCDRegister_ILI9341_MADCTL_MY | kLCDRegister_ILI9341_MADCTL_BGR);
     // Initialize default full-screen address window.
     // TODO: Is this necessary?
-    ILI9341SetCursor(0, 0);
+    ILI9341SetCursor(0, 0, inWidth, inHeight);
 }
 
 // ----------------------------------------------------------------------------
-void ILI9341SetLandscape1(void)
+void ILI9341SetLandscape1(uint16_t inWidth, uint16_t inHeight)
 {
     mLCDWriteRegister(kLCDRegister_ILI9341_MEMCONTROL);
     mLCDWriteData(kLCDRegister_ILI9341_MADCTL_MX | kLCDRegister_ILI9341_MADCTL_MY | kLCDRegister_ILI9341_MADCTL_MV | kLCDRegister_ILI9341_MADCTL_BGR);
     // Initialize default full-screen address window.
     // TODO: Is this necessary?
-    ILI9341SetCursor(0, 0);
+    ILI9341SetCursor(0, 0, inWidth, inHeight);
 }
 
 // ----------------------------------------------------------------------------
-void ILI9341SetPortrait2(void)
+void ILI9341SetPortrait2(uint16_t inWidth, uint16_t inHeight)
 {
     mLCDWriteRegister(kLCDRegister_ILI9341_MEMCONTROL);
     mLCDWriteData(kLCDRegister_ILI9341_MADCTL_MX | kLCDRegister_ILI9341_MADCTL_BGR);
     // Initialize default full-screen address window.
     // TODO: Is this necessary?
-    ILI9341SetCursor(0, 0);
+    ILI9341SetCursor(0, 0, inWidth, inHeight);
 }
 
 // ----------------------------------------------------------------------------
-void ILI9341SetLandscape2(void)
+void ILI9341SetLandscape2(uint16_t inWidth, uint16_t inHeight)
 {
     mLCDWriteRegister(kLCDRegister_ILI9341_MEMCONTROL);
     mLCDWriteData(kLCDRegister_ILI9341_MADCTL_MV | kLCDRegister_ILI9341_MADCTL_BGR);
     // Initialize default full-screen address window.
     // TODO: Is this necessary?
-    ILI9341SetCursor(0, 0);
+    ILI9341SetCursor(0, 0, inWidth, inHeight);
 }

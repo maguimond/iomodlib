@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-// gLCD.c
+// lcd.c
 //
 // Copyright (C) 2015 GRR Systems <marc-andre.guimond@grr-systems.com>.
 // All rights reserved.
@@ -35,30 +35,30 @@ static void LCDSetOrientation(uint8_t inOrientation)
     {
         case kLCDOrientation_Portrait1:
         {
-            gLCD.width  = kLCDWidth;
+            gLCD.width = kLCDWidth;
             gLCD.height = kLCDHeight;
-            mLCDSetPortrait1();
+            mLCDSetPortrait1(gLCD.width, gLCD.height);
             break;
         }
         case kLCDOrientation_Landscape1:
         {
-            gLCD.width  = kLCDHeight;
+            gLCD.width = kLCDHeight;
             gLCD.height = kLCDWidth;
-            mLCDSetLandscape1();
+            mLCDSetLandscape1(gLCD.width, gLCD.height);
             break;
         }
         case kLCDOrientation_Portrait2:
         {
-            gLCD.width  = kLCDWidth;
+            gLCD.width = kLCDWidth;
             gLCD.height = kLCDHeight;
-            mLCDSetPortrait2();
+            mLCDSetPortrait2(gLCD.width, gLCD.height);
             break;
         }
         case kLCDOrientation_Landscape2:
         {
-            gLCD.width  = kLCDHeight;
+            gLCD.width = kLCDHeight;
             gLCD.height = kLCDWidth;
-            mLCDSetLandscape2();
+            mLCDSetLandscape2(gLCD.width, gLCD.height);
             break;
         }
         default:
@@ -72,7 +72,7 @@ static void LCDSetOrientation(uint8_t inOrientation)
 // ----------------------------------------------------------------------------
 int LCDSetup(void)
 {
-    int status = mLCDDriverSetup(kLCDWidth, kLCDHeight);
+    int status = mLCDDriverSetup();
 
     if (status == 0)
     {
@@ -105,9 +105,9 @@ uint16_t LCDGetHeight(void)
 }
 
 // ----------------------------------------------------------------------------
-void LCDPutPixel(int16_t x, int16_t y, uint16_t inColor)
+void LCDPutPixel(int16_t inPositionX, int16_t inPositionY, uint16_t inColor)
 {
-    mLCDSetCursor(x, y);
+    mLCDSetCursor(inPositionX, inPositionY, gLCD.width, gLCD.height);
     mLCDAccessGRAM();
     mLCDWriteData(inColor);
 }
@@ -222,7 +222,7 @@ void LCDPutChar(uint16_t x, uint16_t y, char c)
 
     uint8_t hIndex;
     uint16_t char_line = 0;
-    mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY);
+    mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY, gLCD.width, gLCD.height);
     for (hIndex = 0; hIndex < gLCD.font->height; hIndex ++)
     {
         uint16_t char_row_mask = gLCD.font->table[(c - 32) * gLCD.font->height + hIndex];
@@ -240,7 +240,7 @@ void LCDPutChar(uint16_t x, uint16_t y, char c)
             }
         }
         char_line ++;
-        mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY + char_line);
+        mLCDSetCursor(gTextBox.cursorX, gTextBox.cursorY + char_line, gLCD.width, gLCD.height);
     }
 }
 
@@ -330,7 +330,7 @@ void LCDSetTextStartPosition(uint16_t inColumn, uint16_t inLine)
 void LCDDrawMonoImage(const uint32_t *pict)
 {
     uint32_t index = 0, i = 0;
-    mLCDSetCursor(0, (gLCD.width - 1));
+    mLCDSetCursor(0, (gLCD.width - 1), gLCD.width, gLCD.height);
     mLCDAccessGRAM();
     for (index = 0; index < 2400; index++)
     {
@@ -357,7 +357,7 @@ void LCDDrawBMP(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, ui
     {
         uint16_t random_x = (Random16() % inWidth);
         uint16_t random_y = (Random16() % inHeight);
-        mLCDSetCursor(random_x + inXOffset, random_y + inYOffset);
+        mLCDSetCursor(random_x + inXOffset, random_y + inYOffset, gLCD.width, gLCD.height);
         mLCDAccessGRAM();
         mLCDWriteData(inImage[(random_y * inWidth) + (random_x - 1)]);
     }*/
@@ -396,7 +396,7 @@ void LCDDrawFade(uint16_t inColor)
 // ----------------------------------------------------------------------------
 void LCDFillScreen(uint16_t inColor)
 {
-    mLCDSetCursor(0, 0);
+    mLCDSetCursor(0, 0, gLCD.width, gLCD.height);
     mLCDAccessGRAM();
     for (uint32_t index = 0; index < kLCDHeight * kLCDWidth; index ++)
     {
@@ -407,7 +407,7 @@ void LCDFillScreen(uint16_t inColor)
 // ----------------------------------------------------------------------------
 void LCDClearScreen(void)
 {
-    mLCDSetCursor(0, 0);
+    mLCDSetCursor(0, 0, gLCD.width, gLCD.height);
     mLCDAccessGRAM();
     for (uint32_t index = 0; index < kLCDHeight * kLCDWidth; index ++)
     {
@@ -426,9 +426,9 @@ void LCDClearLine(uint16_t inLine, uint8_t inLineWidth)
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawLine(uint16_t positonX, uint16_t positonY, uint16_t length, uint8_t direction, uint16_t inColor)
+void LCDDrawLine(uint16_t inPositionX, uint16_t inPositionY, uint16_t length, uint8_t direction, uint16_t inColor)
 {
-    mLCDSetCursor(positonX, positonY);
+    mLCDSetCursor(inPositionX, inPositionY, gLCD.width, gLCD.height);
     if (direction == kLCDDirection_Horizontal)
     {
         mLCDAccessGRAM();
@@ -441,39 +441,39 @@ void LCDDrawLine(uint16_t positonX, uint16_t positonY, uint16_t length, uint8_t 
     {
         for (uint32_t index = 0; index < length; index ++)
         {
-            LCDPutPixel(positonX, positonY, inColor);
-            positonY ++;
+            LCDPutPixel(inPositionX, inPositionY, inColor);
+            inPositionY ++;
         }
     }
 }
 
 // ----------------------------------------------------------------------------
 // TODO: Some functions could be moved to GFX lib.
-void LCDDrawRectangle(uint16_t positonX, uint16_t positonY, uint16_t width, uint16_t height, uint16_t inForeground)
+void LCDDrawRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t width, uint16_t height, uint16_t inForeground)
 {
-    LCDDrawLine(positonX, positonY, width, kLCDDirection_Horizontal, inForeground);
-    LCDDrawLine(positonX, (positonY + height), width, kLCDDirection_Horizontal, inForeground);
-    LCDDrawLine(positonX, positonY, height, kLCDDirection_Vertical, inForeground);
-    LCDDrawLine((positonX + width - 1), positonY, height, kLCDDirection_Vertical, inForeground);
+    LCDDrawLine(inPositionX, inPositionY, width, kLCDDirection_Horizontal, inForeground);
+    LCDDrawLine(inPositionX, (inPositionY + height), width, kLCDDirection_Horizontal, inForeground);
+    LCDDrawLine(inPositionX, inPositionY, height, kLCDDirection_Vertical, inForeground);
+    LCDDrawLine((inPositionX + width - 1), inPositionY, height, kLCDDirection_Vertical, inForeground);
 }
 // ----------------------------------------------------------------------------
-void LCDDrawFullRectangle(uint16_t positonX, uint16_t positonY, uint16_t width, uint16_t height, uint16_t inForeground, uint16_t inBackground)
+void LCDDrawFullRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t width, uint16_t height, uint16_t inForeground, uint16_t inBackground)
 {
-    LCDDrawRectangle(positonX, positonY, width, height, inForeground);
+    LCDDrawRectangle(inPositionX, inPositionY, width, height, inForeground);
 
     width -= 2;
     height --;
-    positonX ++;
-    positonY ++;
+    inPositionX ++;
+    inPositionY ++;
 
     while (height --)
     {
-        LCDDrawLine(positonX, positonY ++, width, kLCDDirection_Horizontal, inBackground);
+        LCDDrawLine(inPositionX, inPositionY ++, width, kLCDDirection_Horizontal, inBackground);
     }
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawCircle(uint16_t positonX, uint16_t positonY, uint16_t radius, uint16_t inColor)
+void LCDDrawCircle(uint16_t inPositionX, uint16_t inPositionY, uint16_t radius, uint16_t inColor)
 {
     int32_t decision;
     uint32_t currentX;
@@ -485,14 +485,14 @@ void LCDDrawCircle(uint16_t positonX, uint16_t positonY, uint16_t radius, uint16
 
     while (currentX <= currentY)
     {
-        LCDPutPixel(positonX + currentX, positonY + currentY, inColor);
-        LCDPutPixel(positonX + currentX, positonY - currentY, inColor);
-        LCDPutPixel(positonX - currentX, positonY + currentY, inColor);
-        LCDPutPixel(positonX - currentX, positonY - currentY, inColor);
-        LCDPutPixel(positonX + currentY, positonY + currentX, inColor);
-        LCDPutPixel(positonX + currentY, positonY - currentX, inColor);
-        LCDPutPixel(positonX - currentY, positonY + currentX, inColor);
-        LCDPutPixel(positonX - currentY, positonY - currentX, inColor);
+        LCDPutPixel(inPositionX + currentX, inPositionY + currentY, inColor);
+        LCDPutPixel(inPositionX + currentX, inPositionY - currentY, inColor);
+        LCDPutPixel(inPositionX - currentX, inPositionY + currentY, inColor);
+        LCDPutPixel(inPositionX - currentX, inPositionY - currentY, inColor);
+        LCDPutPixel(inPositionX + currentY, inPositionY + currentX, inColor);
+        LCDPutPixel(inPositionX + currentY, inPositionY - currentX, inColor);
+        LCDPutPixel(inPositionX - currentY, inPositionY + currentX, inColor);
+        LCDPutPixel(inPositionX - currentY, inPositionY - currentX, inColor);
         if (decision < 0)
         {
             decision += (currentX << 2) + 6;
@@ -507,11 +507,11 @@ void LCDDrawCircle(uint16_t positonX, uint16_t positonY, uint16_t radius, uint16
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawFullCircle(uint16_t positonX, uint16_t positonY, uint16_t radius, uint16_t inForeground, uint16_t inBackground)
+void LCDDrawFullCircle(uint16_t inPositionX, uint16_t inPositionY, uint16_t radius, uint16_t inForeground, uint16_t inBackground)
 {
-    LCDDrawLine(positonX, positonY - radius, 2 * radius + 1, kLCDDirection_Vertical, inBackground);
-    LCDDrawFullCircleHelper(positonX, positonY, radius, 3, 0, inBackground);
-    LCDDrawCircle(positonX, positonY, radius, inForeground);
+    LCDDrawLine(inPositionX, inPositionY - radius, 2 * radius + 1, kLCDDirection_Vertical, inBackground);
+    LCDDrawFullCircleHelper(inPositionX, inPositionY, radius, 3, 0, inBackground);
+    LCDDrawCircle(inPositionX, inPositionY, radius, inForeground);
 }
 
 // ----------------------------------------------------------------------------

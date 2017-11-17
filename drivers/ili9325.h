@@ -85,32 +85,22 @@ typedef enum
 #define kLCDRegister_ILI9325_ENTRY_BGR 0x1000
 
 // ----------------------------------------------------------------------------
-// Data types
-// ----------------------------------------------------------------------------
-typedef struct
-{
-    uint16_t width;
-    uint16_t height;
-    uint8_t orientation;
-} ILI9325_t;
-
-// ----------------------------------------------------------------------------
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
-int ILI9325Setup(uint16_t inWidth, uint16_t inHeight);
+int ILI9325Setup(void);
 ///
-void ILI9325SetCursor(uint16_t inPositionX, uint16_t inPositionY);
+void ILI9325SetCursor(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight)
 ///
 void ILI9325SetOrientation(uint8_t inOrientation);
 ///
-void ILI9325SetPortrait1(void);
+void ILI9325SetPortrait1(uint16_t inWidth, uint16_t inHeight);
 ///
-void ILI9325SetLandscape1(void);
+void ILI9325SetLandscape1(uint16_t inWidth, uint16_t inHeight);
 ///
-void ILI9325SetPortrait2(void);
+void ILI9325SetPortrait2(uint16_t inWidth, uint16_t inHeight);
 ///
-void ILI9325SetLandscape2(void);
+void ILI9325SetLandscape2(uint16_t inWidth, uint16_t inHeight);
 
 #endif // ILI9325_H_
 

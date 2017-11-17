@@ -53,29 +53,20 @@ typedef enum
 #define kLCDRegister_ILI9341_MADCTL_MH 0x04
 
 // ----------------------------------------------------------------------------
-// Data types
-// ----------------------------------------------------------------------------
-typedef struct
-{
-    uint16_t width;
-    uint16_t height;
-} ILI9341_t;
-
-// ----------------------------------------------------------------------------
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
-int ILI9341Setup(uint16_t inWidth, uint16_t inHeight);
+int ILI9341Setup(void);
 ///
-void ILI9341SetCursor(uint16_t inPositonX, uint16_t inPositonY);
+void ILI9341SetCursor(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight);
 ///
-void ILI9341SetPortrait1(void);
+void ILI9341SetPortrait1(uint16_t inWidth, uint16_t inHeight);
 ///
-void ILI9341SetLandscape1(void);
+void ILI9341SetLandscape1(uint16_t inWidth, uint16_t inHeight);
 ///
-void ILI9341SetPortrait2(void);
+void ILI9341SetPortrait2(uint16_t inWidth, uint16_t inHeight);
 ///
-void ILI9341SetLandscape2(void);
+void ILI9341SetLandscape2(uint16_t inWidth, uint16_t inHeight);
 
 #endif // ILI9341_H_
 

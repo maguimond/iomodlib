@@ -144,23 +144,23 @@ typedef struct
 #define LCDGetRGB565(R, G, B) ((((R)& 0xF8) << 8) | (((G) & 0xFC) << 3) | (((B) & 0xF8) >> 3))
 
 #if LCDDriverUseILI9325 == 1
-#define mLCDDriverSetup(inWidth, inHeight) ILI9325Setup(inWidth, inHeight)
-#define mLCDSetCursor() ILI9325SetCursor(inPositonX, inPositonY)
-#define mLCDSetPortrait1() ILI9325SetPortrait1()
-#define mLCDSetLandscape1() ILI9325SetLandscape1()
-#define mLCDSetPortrait2() ILI9325SetPortrait2()
-#define mLCDSetLandscape2() ILI9325SetLandscape2()
+#define mLCDDriverSetup() ILI9325Setup()
+#define mLCDSetCursor(inPositonX, inPositonY, inWidth, inHeight) ILI9325SetCursor(inPositonX, inPositonY, inWidth, inHeight)
+#define mLCDSetPortrait1(inWidth, inHeight) ILI9325SetPortrait1(inWidth, inHeight)
+#define mLCDSetLandscape1(inWidth, inHeight) ILI9325SetLandscape1(inWidth, inHeight)
+#define mLCDSetPortrait2(inWidth, inHeight) ILI9325SetPortrait2(inWidth, inHeight)
+#define mLCDSetLandscape2(inWidth, inHeight) ILI9325SetLandscape2(inWidth, inHeight)
 #define mLCDAccessGRAM() (mFSMCWriteRegister(kLCDRegister_ILI9325_RW_GRAM))
 #define mLCDWriteData(inData) mFSMCWriteData(inData)
 #endif
 
 #if LCDDriverUseILI9341 == 1
-#define mLCDDriverSetup(inWidth, inHeight) ILI9341Setup(inWidth, inHeight)
-#define mLCDSetCursor(inPositonX, inPositonY) ILI9341SetCursor(inPositonX, inPositonY)
-#define mLCDSetPortrait1() ILI9341SetPortrait1()
-#define mLCDSetLandscape1() ILI9341SetLandscape1()
-#define mLCDSetPortrait2() ILI9341SetPortrait2()
-#define mLCDSetLandscape2() ILI9341SetLandscape2()
+#define mLCDDriverSetup() ILI9341Setup()
+#define mLCDSetCursor(inPositonX, inPositonY, inWidth, inHeight) ILI9341SetCursor(inPositonX, inPositonY, inWidth, inHeight)
+#define mLCDSetPortrait1(inWidth, inHeight) ILI9341SetPortrait1(inWidth, inHeight)
+#define mLCDSetLandscape1(inWidth, inHeight) ILI9341SetLandscape1(inWidth, inHeight)
+#define mLCDSetPortrait2(inWidth, inHeight) ILI9341SetPortrait2(inWidth, inHeight)
+#define mLCDSetLandscape2(inWidth, inHeight) ILI9341SetLandscape2(inWidth, inHeight)
 #define mLCDAccessGRAM() (mFSMCWriteRegister(kLCDRegister_ILI9341_MEMORYWRITE))
 #define mLCDWriteData(inData) mFSMCWriteData(inData)
 #endif

@@ -21,7 +21,7 @@
 
 // ----------------------------------------------------------------------------
 // Private variables.
-ILI9325_t gILI9325;
+static uint8_t gILI9325Orientation;
 
 static const uint16_t kLCDRegisterTable_ILI9325[] =
 {
@@ -107,15 +107,15 @@ static void LCDSetRegisters(uint16_t driver)
 }
 
 // ----------------------------------------------------------------------------
-static void ILI9325SetAddressWindows(uint16_t inPositionX, uint16_t inPositionY, uint16_t width, uint16_t height)
+static void ILI9325SetAddressWindows(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight)
 {
     // Set address window.
     mLCDWriteRegister(kLCDRegister_ILI9325_HOR_START_AD, inPositionX);
-    mLCDWriteRegister(kLCDRegister_ILI9325_HOR_END_AD, width);
+    mLCDWriteRegister(kLCDRegister_ILI9325_HOR_END_AD, inWidth);
     mLCDWriteRegister(kLCDRegister_ILI9325_VER_START_AD, inPositionY);
-    mLCDWriteRegister(kLCDRegister_ILI9325_VER_END_AD, height);
+    mLCDWriteRegister(kLCDRegister_ILI9325_VER_END_AD, inHeight);
     // Set address counter to top left
-    ILI9325SetCursor(0, 0);
+    ILI9325SetCursor(0, 0, inWidth, inHeight);
 }
 
 // ----------------------------------------------------------------------------
@@ -128,11 +128,8 @@ static uint16_t ILI9325ReadID(void)
 }
 
 // ----------------------------------------------------------------------------
-int ILI9325Setup(uint16_t inWidth, uint16_t inHeight)
+int ILI9325Setup(void)
 {
-    gILI9341.width = inWidth;
-    gILI9341.height = inHeight;
-
     int status = 0;
 
     // Setup like in BLE HAL.
@@ -156,27 +153,27 @@ int ILI9325Setup(uint16_t inWidth, uint16_t inHeight)
 }
 
 // ----------------------------------------------------------------------------
-void ILI9325SetCursor(uint16_t inPositionX, uint16_t inPositionY)
+void ILI9325SetCursor(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight)
 {
     uint16_t cursorX;
     uint16_t cursorY;
 
-    switch (gILI9325.orientation)
+    switch (gILI9325Orientation)
     {
         case 0:
-            cursorX = gILI9325.width - 1 - inPositionX;
-            cursorY = gILI9325.height - 1 - inPositionY;
+            cursorX = inWidth - 1 - inPositionX;
+            cursorY = inHeight - 1 - inPositionY;
             break;
         case 1:
             cursorX = inPositionY;
-            cursorY = gILI9325.height - 1 - inPositionX;
+            cursorY = inHeight - 1 - inPositionX;
             break;
         case 2:
             cursorX = inPositionX;
             cursorY = inPositionY;
             break;
         case 3:
-            cursorX = gILI9325.width - 1 - inPositionY;
+            cursorX = inWidth - 1 - inPositionY;
             cursorY = inPositionX;
             break;
     }
@@ -188,41 +185,41 @@ void ILI9325SetCursor(uint16_t inPositionX, uint16_t inPositionY)
 }
 
 // ----------------------------------------------------------------------------
-void ILI9325SetPortrait1(void)
+void ILI9325SetPortrait1(uint16_t inWidth, uint16_t inHeight)
 {
-    gILI9325.orientation = 0;
+    gILI9325Orientation = 0;
     mLCDWriteRegister(kLCDRegister_ILI9325_ENTRY_MOD, kLCDRegister_ILI9325_ENTRY_OR3 | kLCDRegister_ILI9325_ENTRY_BGR);
     // TODO: Is this necessary?
     // For ILI932x, initialize default full-screen address window.
-    ILI9325SetAddressWindows(0, 0, gILI9325.width, gILI9325.height);
+    ILI9325SetAddressWindows(0, 0, inWidth, inHeight);
 }
 
 // ----------------------------------------------------------------------------
-void ILI9325SetLandscape1(void)
+void ILI9325SetLandscape1(uint16_t inWidth, uint16_t inHeight)
 {
-    gILI9325.orientation = 1;
+    gILI9325Orientation = 1;
     mLCDWriteRegister(kLCDRegister_ILI9325_ENTRY_MOD, kLCDRegister_ILI9325_ENTRY_OR4 | kLCDRegister_ILI9325_ENTRY_BGR);
     // TODO: Is this necessary?
     // For ILI932x, initialize default full-screen address window.
-    ILI9325SetAddressWindows(0, 0, gILI9325.width, gILI9325.height);
+    ILI9325SetAddressWindows(0, 0, inWidth, inHeight);
 }
 
 // ----------------------------------------------------------------------------
-void ILI9325SetPortrait2(void)
+void ILI9325SetPortrait2(uint16_t inWidth, uint16_t inHeight)
 {
-    gILI9325.orientation = 2;
+    gILI9325Orientation = 2;
     mLCDWriteRegister(kLCDRegister_ILI9325_ENTRY_MOD, kLCDRegister_ILI9325_ENTRY_OR1 | kLCDRegister_ILI9325_ENTRY_BGR);
     // TODO: Is this necessary?
     // For ILI932x, initialize default full-screen address window.
-    ILI9325SetAddressWindows(0, 0, gILI9325.width, gILI9325.height);
+    ILI9325SetAddressWindows(0, 0, inWidth, inHeight);
 }
 
 // ----------------------------------------------------------------------------
-void ILI9325SetLandscape2(void)
+void ILI9325SetLandscape2(uint16_t inWidth, uint16_t inHeight)
 {
-    gILI9325.orientation = 3;
+    gILI9325Orientation = 3;
     mLCDWriteRegister(kLCDRegister_ILI9325_ENTRY_MOD, kLCDRegister_ILI9325_ENTRY_OR2 | kLCDRegister_ILI9325_ENTRY_BGR);
     // TODO: Is this necessary?
     // For ILI932x, initialize default full-screen address window.
-    ILI9325SetAddressWindows(0, 0, gILI9325.width, gILI9325.height);
+    ILI9325SetAddressWindows(0, 0, inWidth, inHeight);
 }
