@@ -11,7 +11,6 @@
 #define USP10973_H_
 
 // Standard includes.
-#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -50,7 +49,7 @@ extern "C"
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
-bool USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperature);
+int USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperature);
 
 #ifdef __cplusplus
 }

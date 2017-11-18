@@ -25,36 +25,22 @@
 // ----------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------
-// TODO: define in config.
-#define kIOModMaxIOs 8
-
 // Status codes.
 typedef enum
 {
-    kIOMod_Status_NotDetected,
-    kIOMod_Status_Valid,
-    kIOMod_Status_InvalidRange,
-    kIOMod_Status_OverCurrent,
+    kIOModPortStatus_Valid,
+    kIOModPortStatus_NotDetected,
+    kIOModPortStatus_DriverBusError,
+    kIOModPortStatus_InvalidRange,
+    kIOModPortStatus_OverLoad,
+    kIOModPortStatus_OpenLoad,
     // Reserved for future use, keep last.
-    kIOMod_Status_Reserved,
-} PortStatus_Status_t;
+    kIOModPortStatus_Reserved,
+} IOModPortStatus_t;
 
 // ----------------------------------------------------------------------------
 // Data types
 // ----------------------------------------------------------------------------
-
-typedef struct
-{
-    uint8_t status;
-    uint8_t deviceID;
-    uint8_t outputLevel;
-    // Depending on the architecture, use signed 16-bits or float.
-#ifdef GCC_ARMCM3
-    int16_t data;
-#else
-    float data;
-#endif
-} IOModPort_t;
 
 typedef struct
 {
@@ -65,15 +51,10 @@ typedef struct
 
 typedef struct
 {
-    IOModVersion_t version;
+    // TODO: Add enum for models.
     uint8_t model;
-    IOModPort_t io[kIOModMaxIOs];
+    IOModVersion_t version;
 } IOMod_t;
-
-// ----------------------------------------------------------------------------
-// Macros
-// ----------------------------------------------------------------------------
-#define mIOModValidateStatus(returnStatus) if (returnStatus != 0) { return returnStatus; }
 
 // ----------------------------------------------------------------------------
 // Function prototypes
@@ -82,5 +63,7 @@ typedef struct
 int IOModADCInit(uint8_t inSlaveID);
 ///
 int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
+///
+int IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 
 #endif // IOMOD_H_

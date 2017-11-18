@@ -19,6 +19,7 @@
 // Lib includes.
 #include "iomod.h"
 #include "boardconfig.h"
+#include "conversion.h"
 
 // Drivers includes.
 #include "adc128d818.h"
@@ -28,6 +29,9 @@
 // Private variables.
 IOMod_t gIOMod;
 static uint8_t gADCI2CAddressTable[kADC128D818_MaxAddresses];
+
+// Private macros.
+#define mIOModValidateDriverStatus(returnStatus) if (returnStatus != 0) { return kIOModPortStatus_DriverBusError; }
 
 // ----------------------------------------------------------------------------
 uint8_t IOModGetADCAddress(uint8_t inSlaveID)
@@ -69,9 +73,9 @@ int IOModADCInit(uint8_t inSlaveID)
     // Get the slave ADC address.
     gADCI2CAddressTable[inSlaveID] = IOModGetADCAddress(inSlaveID);
     // Initialize ADC.
-    mIOModValidateStatus(ADC128D818Init(gADCI2CAddressTable[inSlaveID]));
+    mIOModValidateDriverStatus(ADC128D818Init(gADCI2CAddressTable[inSlaveID]));
     // Start ADC continuous conversions.
-    mIOModValidateStatus(ADC128D818StartConversion(gADCI2CAddressTable[inSlaveID], kADC128D818_ConversionRate_Continuous));
+    mIOModValidateDriverStatus(ADC128D818StartConversion(gADCI2CAddressTable[inSlaveID], kADC128D818_ConversionRate_Continuous));
 
     // If we make it this far, its a success.
     return 0;
@@ -80,24 +84,49 @@ int IOModADCInit(uint8_t inSlaveID)
 // ----------------------------------------------------------------------------
 int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
 {
-    // TODO: Somehow from config determine on which channels are the temp sensors.
-
+    int status;
     int32_t temperature = 0;
     uint16_t adcRawData;
 
-    mIOModValidateStatus(ADC128D818ReadChannel(gADCI2CAddressTable[inSlaveID], inChannelIdx, &adcRawData));
+    mIOModValidateDriverStatus(ADC128D818ReadChannel(gADCI2CAddressTable[inSlaveID], inChannelIdx, &adcRawData));
 
     // Convert thermistor value.
-    if (!USP10973BetaComputeTemperature(adcRawData, &temperature))
+    if (USP10973BetaComputeTemperature(adcRawData, &temperature) != 0)
     {
-        gIOMod.io[inChannelIdx].status = kIOMod_Status_InvalidRange;
+        status = kIOModPortStatus_InvalidRange;
     }
     else
     {
-        gIOMod.io[inChannelIdx].status = kIOMod_Status_Valid;
+        status = kIOModPortStatus_Valid;
         *outADCData = temperature;
     }
 
     // If we make it this far, its a success.
-    return 0;
+    return status;
+}
+
+// ----------------------------------------------------------------------------
+int IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
+{
+    int status;
+    int32_t current = 0;
+    uint16_t adcRawData;
+
+    mIOModValidateDriverStatus(ADC128D818ReadChannel(gADCI2CAddressTable[inSlaveID], inChannelIdx, &adcRawData));
+
+    // Convert to mA: (300 / 2^12 - 1) * 2^16.
+    current = ConversionDecode(adcRawData, 4801, 16, 1);
+
+    // TODO: Make constants (should also be programmable).
+    if (current > 300)
+    {
+        status = kIOModPortStatus_OverLoad;
+    }
+    else
+    {
+        status = kIOModPortStatus_Valid;
+        *outADCData = current;
+    }
+
+    return status;
 }

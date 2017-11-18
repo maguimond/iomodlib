@@ -26,8 +26,10 @@
 #define kADCMaxValue ((1 << kADCResolution) - 1) * kRREF
 
 // ----------------------------------------------------------------------------
-bool USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperature)
+int USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperature)
 {
+    int status = 0;
+
     // Get resistance value of the thermistor (valueR2 = ((RREF * VREF) / VADC) - RREF).
     // FIXME: Linux platform (uint32_t)kADCMaxValue does not work?
     uint32_t valueR2 = (((double)kADCMaxValue / (uint32_t)inRawADCValue) - (uint32_t)kRREF);
@@ -35,6 +37,7 @@ bool USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperat
     double beta = 0;
     double valueR1 = 0;
     double valueT1 = 0;
+
     // Apply coefficients according to the resistance range.
     if ((valueR2 <= kR1M40_0) && (valueR2 > kR10_50))
     {
@@ -60,12 +63,13 @@ bool USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperat
     else
     {
         // Resistance out of range, invalid for conversion.
-        return false;
+        return status = -1;
     }
+
     double lnResult = log((double)valueR2 / valueR1);
     // Simplified Steinhart-Hart equation (for Beta parameter) - result on 3 decimal points.
     *outTemperature = (int32_t)(((beta * valueT1) / (beta + lnResult * valueT1) - (double)kKelvinConstant) * (double)1000);
 
     // Value is in range, success.
-    return true;
+    return status;
 }
