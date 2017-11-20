@@ -183,13 +183,13 @@ void LCDDisplayOff(void);
 ///
 void LCDSetTextWrapping(uint8_t wrap_mode);
 ///
-void LCDSetColors(uint16_t foreground, uint16_t background);
+void LCDSetColors(uint16_t inForegroundColor, uint16_t inBackgroundColor);
 ///
-void LCDGetColors(uint16_t* outForeground, uint16_t* outBackground);
+void LCDGetColors(uint16_t* outForegroundColor, uint16_t* outBackgroundColor);
 ///
-void LCDSetFontColor(uint16_t color);
+void LCDSetFontColor(uint16_t inColor);
 ///
-void LCDSetBackgroundColor(uint16_t Color);
+void LCDSetBackgroundColor(uint16_t inColor);
 ///
 void LCDSetFont(uint8_t font);
 ///
@@ -215,7 +215,7 @@ void LCDDrawImage(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, 
 ///
 void LCDDrawFade(uint16_t inColor);
 ///
-void LCDFillScreen(uint16_t Color);
+void LCDFillScreen(uint16_t inColor);
 ///
 void LCDClearScreen(void);
 ///

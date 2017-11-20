@@ -133,16 +133,16 @@ void LCDSetTextWrapping(uint8_t wrap_mode)
 }
 
 // ----------------------------------------------------------------------------
-void LCDSetColors(uint16_t foreground, uint16_t background)
+void LCDSetColors(uint16_t inForegroundColor, uint16_t inBackgroundColor)
 {
-    gLCD.foreground = foreground;
-    gLCD.background = background;
+    gLCD.foreground = inForegroundColor;
+    gLCD.background = inBackgroundColor;
 }
 
 // ----------------------------------------------------------------------------
-void LCDGetColors(uint16_t* outForeground, uint16_t* outBackground)
+void LCDGetColors(uint16_t* outForegroundColor, uint16_t* outBackgroundColor)
 {
-    *outForeground = gLCD.foreground; *outBackground = gLCD.background;
+    *outForegroundColor = gLCD.foreground; *outBackgroundColor = gLCD.background;
 }
 
 // ----------------------------------------------------------------------------
