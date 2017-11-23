@@ -187,13 +187,9 @@ void LCDSetColors(uint16_t inForegroundColor, uint16_t inBackgroundColor);
 ///
 void LCDGetColors(uint16_t* outForegroundColor, uint16_t* outBackgroundColor);
 ///
-void LCDSetFontColor(uint16_t inColor);
+void LCDSetFont(fonts_t* inFont);
 ///
-void LCDSetBackgroundColor(uint16_t inColor);
-///
-void LCDSetFont(uint8_t font);
-///
-fonts_t* LCDGetFont(void);
+void LCDGetFont(fonts_t* outFont);
 ///
 uint16_t LCDGetFontWidth(void);
 ///
@@ -204,8 +200,6 @@ void LCDPutChar(uint16_t x, uint16_t y, char c);
 void LCDPutText(uint16_t inColumn, uint16_t inLine, const char* inTextPointer);
 ///
 void LCDAppendText(char* text_ptr);
-///
-void LCDSetTextStartPosition(uint16_t col_offset, uint16_t line);
 ///
 void LCDDrawMonoImage(const uint32_t* pict);
 ///

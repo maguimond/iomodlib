@@ -82,7 +82,7 @@ int LCDSetup(void)
         LCDClearScreen();
         // Apply test default settings.
         LCDSetTextWrapping(kLCDTextWrapping_Word);
-        LCDSetFont(FONT_7X10);
+        LCDSetFont(&font7x10);
     }
     else
     {
@@ -146,52 +146,15 @@ void LCDGetColors(uint16_t* outForegroundColor, uint16_t* outBackgroundColor)
 }
 
 // ----------------------------------------------------------------------------
-void LCDSetFontColor(uint16_t color)
+void LCDSetFont(fonts_t* inFont)
 {
-    gLCD.foreground = color;
+    gLCD.font = inFont;
 }
 
 // ----------------------------------------------------------------------------
-void LCDSetBackgroundColor(uint16_t color)
+void LCDGetFont(fonts_t* outFont)
 {
-    gLCD.background = color;
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetFont(uint8_t inFont)
-{
-    switch (inFont)
-    {
-        case FONT_7X10:
-            gLCD.font = &font7x10;
-            break;
-        case FONT_8X8:
-                gLCD.font = &font8x8;
-                break;
-        case FONT_8X12:
-                gLCD.font = &font8x12;
-                break;
-        case FONT_11X18:
-                gLCD.font = &font11x18;
-                break;
-        case FONT_12X12:
-                gLCD.font = &font12x12;
-                break;
-        case FONT_16X24:
-                gLCD.font = &font16x24;
-                break;
-        case FONT_16X26:
-                gLCD.font = &font16x26;
-                break;
-        default:
-            break;
-    }
-}
-
-// ----------------------------------------------------------------------------
-fonts_t* LCDGetFont(void)
-{
-    return gLCD.font;
+    outFont = gLCD.font;
 }
 
 // ----------------------------------------------------------------------------
@@ -317,13 +280,6 @@ void LCDPutText(uint16_t inColumn, uint16_t inLine, const char* inTextPointer)
 void LCDAppendText(char* inTextPointer)
 {
     LCDPutText(gTextBox.cursorX, gTextBox.cursorY, inTextPointer);
-}
-
-// ----------------------------------------------------------------------------
-void LCDSetTextStartPosition(uint16_t inColumn, uint16_t inLine)
-{
-    gTextBox.startPosX = gTextBox.cursorX = inColumn;
-    gTextBox.startPosY = gTextBox.cursorY = inLine;
 }
 
 // ----------------------------------------------------------------------------
