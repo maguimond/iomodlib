@@ -142,7 +142,8 @@ void LCDSetColors(uint16_t inForegroundColor, uint16_t inBackgroundColor)
 // ----------------------------------------------------------------------------
 void LCDGetColors(uint16_t* outForegroundColor, uint16_t* outBackgroundColor)
 {
-    *outForegroundColor = gLCD.foreground; *outBackgroundColor = gLCD.background;
+    *outForegroundColor = gLCD.foreground;
+    *outBackgroundColor = gLCD.background;
 }
 
 // ----------------------------------------------------------------------------
@@ -152,9 +153,9 @@ void LCDSetFont(fonts_t* inFont)
 }
 
 // ----------------------------------------------------------------------------
-void LCDGetFont(fonts_t* outFont)
+fonts_t* LCDGetFont(void)
 {
-    outFont = gLCD.font;
+    return gLCD.font;
 }
 
 // ----------------------------------------------------------------------------
@@ -213,6 +214,7 @@ void LCDPutText(uint16_t inColumn, uint16_t inLine, const char* inTextPointer)
     gTextBox.cursorX = inColumn;
     gTextBox.cursorY = inLine;
 
+    // TODO: Should input inSize.
     // Send the string character by character on lCD.
     while (*inTextPointer != 0)
     {
@@ -280,6 +282,13 @@ void LCDPutText(uint16_t inColumn, uint16_t inLine, const char* inTextPointer)
 void LCDAppendText(char* inTextPointer)
 {
     LCDPutText(gTextBox.cursorX, gTextBox.cursorY, inTextPointer);
+}
+
+// ----------------------------------------------------------------------------
+void LCDSetTextStartPosition(uint16_t inColumn, uint16_t inLine)
+{
+    gTextBox.startPosX = gTextBox.cursorX = inColumn;
+    gTextBox.startPosY = gTextBox.cursorY = inLine;
 }
 
 // ----------------------------------------------------------------------------
