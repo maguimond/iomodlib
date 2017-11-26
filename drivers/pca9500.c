@@ -36,7 +36,7 @@ static PCA9500_t gPCA9500[kPCA9500_MaxAddresses];
 void PCA9500Init(void)
 {
     // Setup I2C1 driver.
-    I2C1Setup(); // FIXME: Not modular. It references a specific function / driver.
+    I2C1Setup(400000); // FIXME: Not modular. It references a specific function / driver.
 }
 
 // ----------------------------------------------------------------------------
