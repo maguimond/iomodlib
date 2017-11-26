@@ -237,6 +237,13 @@ int S25FL256Erase64K(uint32_t inAddress)
 
     status = SPI3WriteRegister(kS25FL256_Register4SE, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete);
 
+    // Wait until erase is done. TODO: Add timeout.
+    do
+    {
+        status = S25FL256BusyWait();
+    }
+    while (status == kError_FlashBusy);
+
     return status;
 }
 

@@ -26,27 +26,6 @@
 #include "boardconfiguser.h"
 
 // ----------------------------------------------------------------------------
-// Constants
-// ----------------------------------------------------------------------------
-#define kBoardConfig_MagicNumber 0xDEAD
-#define kBoardConfig_MasterUserSize (kMasterConfig_CRC - kMasterConfig_Magic)
-#define kBoardConfig_MasterWriteQueueLenght 4
-#define kBoardConfig_SlaveUserSize (kSlaveConfig_CRC - kSlaveConfig_Magic)
-#define kBoardConfig_SlaveWriteQueueLenght 4
-
-typedef enum
-{
-    SlaveID1,
-    SlaveID2,
-    SlaveID3,
-    SlaveID4,
-    SlaveID5,
-    SlaveID6,
-    SlaveID_Max,
-    MasterID = 0x0A,
-} BoardID_t;
-
-// ----------------------------------------------------------------------------
 // Data types
 // ----------------------------------------------------------------------------
 typedef struct
@@ -80,7 +59,5 @@ uint8_t MasterConfigReadByte(uint8_t inAddress);
 uint8_t SlaveConfigReadByte(uint8_t inSlaveID, uint8_t inAddress);
 ///
 uint16_t SlaveConfigReadShort(uint8_t inSlaveID, uint8_t inAddress);
-///
-void TaskBoardConfig(void* args);
 
 #endif // BOARDCONFIG_H_
