@@ -391,20 +391,20 @@ void LCDClearLine(uint16_t inLine, uint8_t inLineWidth)
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawLine(uint16_t inPositionX, uint16_t inPositionY, uint16_t length, uint8_t direction, uint16_t inColor)
+void LCDDrawLine(uint16_t inPositionX, uint16_t inPositionY, uint16_t inLength, uint8_t inDirection, uint16_t inColor)
 {
     mLCDSetCursor(inPositionX, inPositionY, gLCD.width, gLCD.height);
-    if (direction == kLCDDirection_Horizontal)
+    if (inDirection == kLCDDirection_Horizontal)
     {
         mLCDAccessGRAM();
-        for (uint32_t index = 0; index < length; index ++)
+        for (uint32_t index = 0; index < inLength; index ++)
         {
             mLCDWriteData(inColor);
         }
     }
     else
     {
-        for (uint32_t index = 0; index < length; index ++)
+        for (uint32_t index = 0; index < inLength; index ++)
         {
             LCDPutPixel(inPositionX, inPositionY, inColor);
             inPositionY ++;
@@ -412,28 +412,89 @@ void LCDDrawLine(uint16_t inPositionX, uint16_t inPositionY, uint16_t length, ui
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------
+void LCDDrawSegment(uint16_t inX0, uint16_t inY0, uint16_t inX1, uint16_t inY1, uint16_t inColor)
+{
+    int16_t steep = abs(inY1 - inY0) > abs(inX1 - inX0);
+
+    if (steep)
+    {
+        mSwap(inX0, inY0);
+        mSwap(inX1, inY1);
+    }
+
+    if (inX0 > inX1)
+    {
+        mSwap(inX0, inX1);
+        mSwap(inY0, inY1);
+    }
+
+    int16_t dx, dy;
+    dx = inX1 - inX0;
+    dy = abs(inY1 - inY0);
+
+    int16_t err = dx / 2;
+    int16_t ystep;
+
+    if (inY0 < inY1)
+    {
+        ystep = 1;
+    }
+    else
+    {
+        ystep = -1;
+    }
+
+    for (; inX0 <= inX1; inX0 ++)
+    {
+        if (steep)
+        {
+            LCDPutPixel(inY0, inX0, inColor);
+        }
+        else
+        {
+            LCDPutPixel(inX0, inY0, inColor);
+        }
+
+        err -= dy;
+        if (err < 0)
+        {
+            inY0 += ystep;
+            err += dx;
+        }
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------
+void LCDDrawTriangle(uint16_t inX0, uint16_t inY0, uint16_t inX1, uint16_t inY1, uint16_t inX2, uint16_t inY2, uint16_t inColor)
+{
+    LCDDrawSegment(inX0, inY0, inX1, inY1, inColor);
+    LCDDrawSegment(inX1, inY1, inX2, inY2, inColor);
+    LCDDrawSegment(inX2, inY2, inX0, inY0, inColor);
+}
+
 // ----------------------------------------------------------------------------
 // TODO: Some functions could be moved to GFX lib.
-void LCDDrawRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t width, uint16_t height, uint16_t inForeground)
+void LCDDrawRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight, uint16_t inForeground)
 {
-    LCDDrawLine(inPositionX, inPositionY, width, kLCDDirection_Horizontal, inForeground);
-    LCDDrawLine(inPositionX, (inPositionY + height), width, kLCDDirection_Horizontal, inForeground);
-    LCDDrawLine(inPositionX, inPositionY, height, kLCDDirection_Vertical, inForeground);
-    LCDDrawLine((inPositionX + width - 1), inPositionY, height, kLCDDirection_Vertical, inForeground);
+    LCDDrawLine(inPositionX, inPositionY, inWidth, kLCDDirection_Horizontal, inForeground);
+    LCDDrawLine(inPositionX, (inPositionY + inHeight), inWidth, kLCDDirection_Horizontal, inForeground);
+    LCDDrawLine(inPositionX, inPositionY, inHeight, kLCDDirection_Vertical, inForeground);
+    LCDDrawLine((inPositionX + inWidth - 1), inPositionY, inHeight, kLCDDirection_Vertical, inForeground);
 }
 // ----------------------------------------------------------------------------
-void LCDDrawFullRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t width, uint16_t height, uint16_t inForeground, uint16_t inBackground)
+void LCDDrawFullRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight, uint16_t inForeground, uint16_t inBackground)
 {
-    LCDDrawRectangle(inPositionX, inPositionY, width, height, inForeground);
+    LCDDrawRectangle(inPositionX, inPositionY, inWidth, inHeight, inForeground);
 
-    width -= 2;
-    height --;
+    inWidth -= 2;
+    inHeight --;
     inPositionX ++;
     inPositionY ++;
 
-    while (height --)
+    while (inHeight --)
     {
-        LCDDrawLine(inPositionX, inPositionY ++, width, kLCDDirection_Horizontal, inBackground);
+        LCDDrawLine(inPositionX, inPositionY ++, inWidth, kLCDDirection_Horizontal, inBackground);
     }
 }
 
@@ -481,7 +542,7 @@ void LCDDrawFullCircle(uint16_t inPositionX, uint16_t inPositionY, uint16_t radi
 
 // ----------------------------------------------------------------------------
 // Used to do circles and roundrects
-void LCDDrawFullCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color)
+void LCDDrawFullCircleHelper(int16_t inX0, int16_t inY0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color)
 {
     int16_t f = 1 - r;
     int16_t ddF_x = 1;
@@ -503,13 +564,13 @@ void LCDDrawFullCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornerna
 
         if (cornername & 0x1)
         {
-            LCDDrawLine(x0+x, y0 - y, 2 * y + 1 + delta, kLCDDirection_Vertical, color);
-            LCDDrawLine(x0+y, y0 - x, 2 * x + 1 + delta, kLCDDirection_Vertical, color);
+            LCDDrawLine(inX0 + x, inY0 - y, 2 * y + 1 + delta, kLCDDirection_Vertical, color);
+            LCDDrawLine(inX0 + y, inY0 - x, 2 * x + 1 + delta, kLCDDirection_Vertical, color);
         }
         if (cornername & 0x2)
         {
-            LCDDrawLine(x0 - x, y0 - y, 2 * y + 1 + delta, kLCDDirection_Vertical, color);
-            LCDDrawLine(x0 - y, y0 - x, 2 * x + 1 + delta, kLCDDirection_Vertical, color);
+            LCDDrawLine(inX0 - x, inY0 - y, 2 * y + 1 + delta, kLCDDirection_Vertical, color);
+            LCDDrawLine(inX0 - y, inY0 - x, 2 * x + 1 + delta, kLCDDirection_Vertical, color);
         }
     }
 }

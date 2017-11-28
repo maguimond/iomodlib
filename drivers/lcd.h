@@ -141,7 +141,8 @@ typedef struct
 // ----------------------------------------------------------------------------
 // Macros
 // ----------------------------------------------------------------------------
-#define LCDGetRGB565(R, G, B) ((((R)& 0xF8) << 8) | (((G) & 0xFC) << 3) | (((B) & 0xF8) >> 3))
+#define mLCDGetRGB565(R, G, B) ((((R)& 0xF8) << 8) | (((G) & 0xFC) << 3) | (((B) & 0xF8) >> 3))
+#define mSwap(a, b) { int16_t t = a; a = b; b = t; }
 
 #if LCDDriverUseILI9325 == 1
 #define mLCDDriverSetup() ILI9325Setup()
@@ -217,15 +218,19 @@ void LCDClearScreen(void);
 ///
 void LCDClearLine(uint16_t line, uint8_t line_with);
 ///
-void LCDDrawLine(uint16_t x_pos, uint16_t y_pos, uint16_t length, uint8_t direction, uint16_t inColor);
+void LCDDrawLine(uint16_t inPositionX, uint16_t inPositionY, uint16_t inLength, uint8_t inDirection, uint16_t inColor);
 ///
-void LCDDrawRectangle(uint16_t x_pos, uint16_t y_pos, uint16_t width, uint16_t height, uint16_t inForeground);
+void LCDDrawSegment(uint16_t inX0, uint16_t inY0, uint16_t inX1, uint16_t inY1, uint16_t inColor);
 ///
-void LCDDrawFullRectangle(uint16_t x_pos, uint16_t y_pos, uint16_t width, uint16_t height, uint16_t inForeground, uint16_t inBackground);
+void LCDDrawTriangle(uint16_t inX0, uint16_t inY0, uint16_t inX1, uint16_t inY1, uint16_t inX2, uint16_t inY2, uint16_t inColor);
 ///
-void LCDDrawCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inColor);
+void LCDDrawRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight, uint16_t inForeground);
 ///
-void LCDDrawFullCircle(uint16_t x_pos, uint16_t y_pos, uint16_t radius, uint16_t inForeground, uint16_t inBackground);
+void LCDDrawFullRectangle(uint16_t inPositionX, uint16_t inPositionY, uint16_t inWidth, uint16_t inHeight, uint16_t inForeground, uint16_t inBackground);
+///
+void LCDDrawCircle(uint16_t inPositionX, uint16_t inPositionY, uint16_t radius, uint16_t inColor);
+///
+void LCDDrawFullCircle(uint16_t inPositionX, uint16_t inPositionY, uint16_t radius, uint16_t inForeground, uint16_t inBackground);
 ///
 void LCDDrawFullCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color);
 
