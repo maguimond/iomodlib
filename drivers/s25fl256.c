@@ -57,7 +57,7 @@ static int S25FL256ReadInfo(void)
 
         if (gS25FL256.manufacturerID != 0x01)
         {
-            status = kError_UnsupportedDevice;
+            status = kBoardConfigError_UnsupportedDevice;
         }
 
         if (gS25FL256.sectorArchitecture == kS25FL256_RegisterRDID_SectorArchitecture256KB)
@@ -70,7 +70,7 @@ static int S25FL256ReadInfo(void)
         }
         else
         {
-            status = kError_UnsupportedDevice;
+            status = kBoardConfigError_UnsupportedDevice;
         }
     }
 
@@ -95,7 +95,7 @@ int S25FL256BusyWait(void)
 
             if ((timeout ++) > kS25FL256Timeout)
             {
-                status = kError_FlashBusy;
+                status = kBoardConfigError_FlashBusy;
                 break;
             }
 
@@ -135,24 +135,24 @@ static int S25FL256CheckStatus(uint8_t inStatusFlag)
                 {
                     if (inStatusFlag == S25FL256_RegisterRDSR1_WEL)
                     {
-                        status = kError_FlashWNE;
+                        status = kBoardConfigError_FlashWNE;
                     }
                 }
             }
 
             if (spiData & S25FL256_RegisterRDSR1_E_ERR)
             {
-                status = kError_FlashErase;
+                status = kBoardConfigError_FlashErase;
             }
 
             if (spiData & S25FL256_RegisterRDSR1_P_ERR)
             {
-                status = kError_FlashProg;
+                status = kBoardConfigError_FlashProg;
             }
 
             if ((timeout ++) > kS25FL256Timeout)
             {
-                status = kError_FlashBusy;
+                status = kBoardConfigError_FlashBusy;
             }
 
             if (status != 0)
@@ -242,7 +242,7 @@ int S25FL256Erase64K(uint32_t inAddress)
     {
         status = S25FL256BusyWait();
     }
-    while (status == kError_FlashBusy);
+    while (status == kBoardConfigError_FlashBusy);
 
     return status;
 }

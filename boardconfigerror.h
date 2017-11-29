@@ -22,25 +22,25 @@ extern "C"
 // Error codes
 typedef enum
 {
-    kError_FlashBusy = 1,
-    kError_FlashErase,
-    kError_FlashProg,
-    kError_FlashWNE,
-    kError_UnsupportedDevice,
-    kError_DeviceNotFound,
-    kError_Unknown,
-    kError_Size,
-} ErrorCode;
+    kBoardConfigError_FlashBusy = 1,
+    kBoardConfigError_FlashErase,
+    kBoardConfigError_FlashProg,
+    kBoardConfigError_FlashWNE,
+    kBoardConfigError_UnsupportedDevice,
+    kBoardConfigError_DeviceNotFound,
+    kBoardConfigError_Unknown,
+    kBoardConfigError_Size,
+} BoardConfigError_Code_t;
 
-#define kErrorTable \
+#define kBoardConfigError_Table \
 { \
-    {kError_FlashBusy, "Flash busy"}, \
-    {kError_FlashErase,"Flash erase"}, \
-    {kError_FlashProg, "Flash programming"}, \
-    {kError_FlashWNE,  "Flash write not enabled"}, \
-    {kError_UnsupportedDevice,  "Unsupported device"}, \
-    {kError_DeviceNotFound,  "Device not found"}, \
-    {kError_Unknown,   "Unknown"}, \
+    {kBoardConfigError_FlashBusy, "Flash busy"}, \
+    {kBoardConfigError_FlashErase,"Flash erase"}, \
+    {kBoardConfigError_FlashProg, "Flash programming"}, \
+    {kBoardConfigError_FlashWNE,  "Flash write not enabled"}, \
+    {kBoardConfigError_UnsupportedDevice,  "Unsupported device"}, \
+    {kBoardConfigError_DeviceNotFound,  "Device not found"}, \
+    {kBoardConfigError_Unknown,   "Unknown"}, \
 }
 
 // ----------------------------------------------------------------------------
@@ -50,7 +50,7 @@ typedef struct
 {
     int errorNo;
     const char* description;
-} ErrorTable_t;
+} BoardConfigError_Table_t;
 
 #ifdef __cplusplus
 }
