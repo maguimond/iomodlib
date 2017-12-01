@@ -19,12 +19,14 @@
 // Standard includes.
 #include <stdbool.h>
 
-// HAL includes.
+// Lib includes.
+#include "iomodutils.h"
+
+// Driver includes.
 #include "adc128d818.h"
 
-// Drivers includes.
+// Bus includes.
 #include "i2c.h"
-#include "utils.h"
 
 // ----------------------------------------------------------------------------
 // Private variables.
@@ -33,16 +35,13 @@ static ADC128D818_t gADC128D818[kADC128D818_MaxAddresses];
 // Private constants.
 #define kADCBusyTimeout 0x0010
 
-// Private macros.
-#define mValidateParam(inParam) if (!inParam) { return -1; }
-
 // ----------------------------------------------------------------------------
 static bool ADC128D818IsBusy(uint8_t inADCAddress, uint8_t inBusyFlag)
 {
     bool isBusy = true;
     uint8_t i2cData = 0;
 
-    int status = I2C1ReadRegister(inADCAddress, kADC128D818_RegisterBusyStatus, &i2cData, 1);
+    int status = I2CReadRegister(inADCAddress, kADC128D818_RegisterBusyStatus, &i2cData, 1);
     if (status != 0)
     {
         return true;
@@ -88,14 +87,14 @@ int ADC128D818Init(uint8_t inADCAddress)
     }
 
     // Read manufacturing data.
-    int status = I2C1ReadRegister(inADCAddress, kADC128D818_RegisterManufacturerID, &(gADC128D818[0].manufacturerID), 1);
+    int status = I2CReadRegister(inADCAddress, kADC128D818_RegisterManufacturerID, &(gADC128D818[0].manufacturerID), 1);
     if (status != 0)
     {
         return status;
     }
 
     // Read revision data.
-    status = I2C1ReadRegister(inADCAddress, kADC128D818_RegisterRevisionID, &(gADC128D818[0].revisionID), 1);
+    status = I2CReadRegister(inADCAddress, kADC128D818_RegisterRevisionID, &(gADC128D818[0].revisionID), 1);
     if (status != 0)
     {
         return status;
@@ -119,7 +118,7 @@ int ADC128D818Init(uint8_t inADCAddress)
     {
         uint8_t registerAddress = gADC128D818RegisterConfigTable[registerIdx ++];
         uint8_t registerValue = gADC128D818RegisterConfigTable[registerIdx];
-        status = I2C1WriteRegister(inADCAddress, registerAddress, &registerValue, 1);
+        status = I2CWriteRegister(inADCAddress, registerAddress, &registerValue, 1);
         if (status != 0)
         {
             break;
@@ -132,16 +131,16 @@ int ADC128D818Init(uint8_t inADCAddress)
 // ----------------------------------------------------------------------------
 int ADC128D818StartConversion(uint8_t inADCAddress, uint8_t inMode)
 {
-    mValidateParam(mADC128D818IsConversionRate(inMode));
+    mIOAssertArg(mADC128D818IsConversionRate(inMode));
 
     // Select conversion mode.
     uint8_t i2cData = inMode;
-    int status = I2C1WriteRegister(inADCAddress, kADC128D818_RegisterConversionRate, &i2cData, 1);
+    int status = I2CWriteRegister(inADCAddress, kADC128D818_RegisterConversionRate, &i2cData, 1);
 
     // Enable startup of monitoring operations.
     // A voltage conversion takes 12.2 ms and a temperature conversion takes 3.6 ms
     i2cData = kADC128D818_RegisterConfiguration_Start;
-    status |= I2C1WriteRegister(inADCAddress, kADC128D818_RegisterConfiguration, &i2cData, 1);
+    status |= I2CWriteRegister(inADCAddress, kADC128D818_RegisterConfiguration, &i2cData, 1);
 
     return status;
 }
@@ -152,7 +151,7 @@ int ADC128D818StopConversion(uint8_t inADCAddress)
     // Disable monitoring operations.
     uint8_t i2cData = 0;
 
-    int status = I2C1WriteRegister(inADCAddress, kADC128D818_RegisterConfiguration, &i2cData, 1);
+    int status = I2CWriteRegister(inADCAddress, kADC128D818_RegisterConfiguration, &i2cData, 1);
 
     return status;
 }
@@ -162,7 +161,7 @@ int ADC128D818SingleConversion(uint8_t inADCAddress)
 {
     uint8_t i2cData = kADC128D818_RegisterOneShot_OneShot;
 
-    int status = I2C1WriteRegister(inADCAddress, kADC128D818_RegisterOneShot, &i2cData, 1);
+    int status = I2CWriteRegister(inADCAddress, kADC128D818_RegisterOneShot, &i2cData, 1);
 
     return status;
 }
@@ -170,9 +169,9 @@ int ADC128D818SingleConversion(uint8_t inADCAddress)
 // ----------------------------------------------------------------------------
 int ADC128D818DeepShutdown(uint8_t inADCAddress, uint8_t inShutdownMode)
 {
-    mValidateParam(mADC128D818IsDeepShutdown(inShutdownMode));
+    mIOAssertArg(mADC128D818IsDeepShutdown(inShutdownMode));
 
-    int status = I2C1WriteRegister(inADCAddress, kADC128D818_RegisterDeepShutdown, &inShutdownMode, 1);
+    int status = I2CWriteRegister(inADCAddress, kADC128D818_RegisterDeepShutdown, &inShutdownMode, 1);
 
     return status;
 }
@@ -183,11 +182,11 @@ int ADC128D818ReadChannel(uint8_t inADCAddress, uint8_t inChannel, uint16_t* out
     // Add channel address base.
     inChannel |= kADC128D818_RegisterChannel0Read;
 
-    mValidateParam(mADC128D818IsChannelReadings(inChannel));
+    mIOAssertArg(mADC128D818IsChannelReadings(inChannel));
 
     uint8_t i2cData = 0;
     uint8_t* i2cDataPointer = &i2cData;
-    int status = I2C1ReadRegister(inADCAddress, inChannel, i2cDataPointer, 2);
+    int status = I2CReadRegister(inADCAddress, inChannel, i2cDataPointer, 2);
 
     uint16_t adcDataBuffer = *(uint16_t*)(i2cDataPointer);
 

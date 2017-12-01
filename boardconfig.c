@@ -23,7 +23,6 @@
 // Lib includes.
 #include "iomodconfig.h"
 #include "boardconfig.h"
-#include "boardconfigerror.h"
 #include "uprint.h"
 #include "crc16.h"
 #include "version.h"
@@ -50,7 +49,7 @@ static int MasterConfigCommit(void)
         status = mMasterConfigPageWrite(addressIndex, gMasterConfigShadowRAM + addressIndex, kMasterConfigTotalSize);
         if (status != 0)
         {
-            PrintMessage("%s - Error: %s (master)\n", __FUNCTION__, ParseErrorMessage(status));
+            PrintMessage("%s%s%04x\n", __FUNCTION__, " - err: ", status);
             return status;
         }
     }
@@ -65,7 +64,7 @@ int MasterConfigInit(uint8_t inSlaveCount)
     int status = mMasterConfigSetup();
     if (status != 0)
     {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
+        PrintMessage("%s%s%04x\n", __FUNCTION__, " - err: ", status);
         return status;
     }
 
@@ -75,7 +74,7 @@ int MasterConfigInit(uint8_t inSlaveCount)
         status = mMasterConfigPageRead(addressIndex, gMasterConfigShadowRAM + addressIndex, kMasterConfigPageSize);
         if (status != 0)
         {
-            PrintMessage("%s - Error: %s (master)\n", __FUNCTION__, ParseErrorMessage(status));
+            PrintMessage("%s%s%04x\n", __FUNCTION__, " - err: ", status);
             return status;
         }
     }
@@ -87,17 +86,17 @@ int MasterConfigInit(uint8_t inSlaveCount)
     // Validate config.
     if (*(uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic) != mHTONS(kBoardConfig_MagicNumber))
     {
-        PrintMessage("%s - Warning: %s\n", __FUNCTION__, "Bad magic");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - warning: Bad magic");
         isConfigValid = false;
     }
     else if (gMasterConfigShadowRAM[kMasterConfig_FlashLayout] != kVersionConfigLayout)
     {
-        PrintMessage("%s - Warning: %s\n", __FUNCTION__, "Unsupported layout");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - warning: Unsupported layout");
         isConfigValid = false;
     }
     else if (mHTONS(crc) != *((uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_CRC)))
     {
-        PrintMessage("%s - Warning: %s\n", __FUNCTION__, "Bad CRC");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - warning: Bad CRC");
         isConfigValid = false;
     }
     else
@@ -108,7 +107,7 @@ int MasterConfigInit(uint8_t inSlaveCount)
     // Overwrite shadow contents if NVM values were not valid.
     if (!isConfigValid)
     {
-        PrintMessage("%s - Warning: %s\n", __FUNCTION__, "Forcing default values");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - notice: Forcing default values");
         mMasterConfigSetDefaults(inSlaveCount, gMasterConfigShadowRAM);
         // Write changes back to NVM.
         status = MasterConfigCommit();
@@ -125,20 +124,20 @@ void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
-        PrintMessage("%s - Warning: %s\n", __FUNCTION__, "Initialization not complete");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Initialization not complete");
         return;
     }
 
     // Validate address and size arguments.
     if (inSize > kMasterConfigPageSize)
     {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, "Bad page size");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Bad page size");
         return;
     }
 
     if (((inAddress / kMasterConfigPageSize) != ((inAddress + inSize) / kMasterConfigPageSize)) && ((inAddress + inSize) % kMasterConfigPageSize))
     {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, "Write across pages");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Write across pages");
         return;
     }
 
@@ -161,7 +160,7 @@ void MasterConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
-        PrintMessage("%s - Warning: %s\n", __FUNCTION__, "Initialization not complete");
+        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Initialization not complete");
         memset(outData, 0, inSize);
         return;
     }

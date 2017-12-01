@@ -17,17 +17,16 @@
  */
 
 // Standard includes.
-#include <string.h>
-
-// HAL includes.
-#include "s25fl256.h"
-
-// Drivers includes.
-#include "spi.h"
+#include "string.h"
 
 // Lib includes.
-#include "uprint.h" // TODO: remove prints, its a lib.
-#include "boardconfigerror.h"
+#include "iomodutils.h"
+
+// Driver includes.
+#include "s25fl256.h"
+
+// Bus includes.
+#include "spi.h"
 
 // ----------------------------------------------------------------------------
 // Private variables.
@@ -37,15 +36,12 @@ static bool gIsMasterConfigDriverInitialized;
 // Private constants.
 #define kS25FL256Timeout 0x10000
 
-// Private macros.
-#define mValidateParam(inParam) if (!inParam) { return -1; }
-
 // ----------------------------------------------------------------------------
 static int S25FL256ReadInfo(void)
 {
     uint8_t spiData[6] = { 0 };
 
-    int status = SPI3ReadRegister(kS25FL256_RegisterRDID, spiData, 6);
+    int status = SPIReadRegister(kS25FL256_RegisterRDID, spiData, 6);
     if (status == 0)
     {
         gS25FL256.manufacturerID = spiData[S25FL256_RegisterRDID_ManufacturerID];
@@ -57,7 +53,7 @@ static int S25FL256ReadInfo(void)
 
         if (gS25FL256.manufacturerID != 0x01)
         {
-            status = kBoardConfigError_UnsupportedDevice;
+            status = kIOMod_DriverError | kIOModError_UnsupportedDevice;
         }
 
         if (gS25FL256.sectorArchitecture == kS25FL256_RegisterRDID_SectorArchitecture256KB)
@@ -70,7 +66,7 @@ static int S25FL256ReadInfo(void)
         }
         else
         {
-            status = kBoardConfigError_UnsupportedDevice;
+            status = kIOMod_DriverError | kIOModError_UnsupportedDevice;
         }
     }
 
@@ -81,29 +77,18 @@ static int S25FL256ReadInfo(void)
 int S25FL256BusyWait(void)
 {
     uint8_t spiData = 0;
-    int status = SPI3ReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1);
-    if (status != 0)
+    mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
+
+    int status = 0;
+    uint32_t timeout = 0;
+    while (spiData & S25FL256_RegisterRDSR1_WIP)
     {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
-    }
-    else
-    {
-        uint32_t timeout = 0;
-        while (spiData & S25FL256_RegisterRDSR1_WIP)
+        mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
+
+        if ((timeout ++) > kS25FL256Timeout)
         {
-            status = SPI3ReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1);
-
-            if ((timeout ++) > kS25FL256Timeout)
-            {
-                status = kBoardConfigError_FlashBusy;
-                break;
-            }
-
-            if (status != 0)
-            {
-                PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
-                break;
-            }
+            status = kIOMod_DriverError | kIOModError_FlashBusy;
+            break;
         }
     }
 
@@ -114,55 +99,48 @@ int S25FL256BusyWait(void)
 static int S25FL256CheckStatus(uint8_t inStatusFlag)
 {
     uint8_t spiData = 0;
-    int status = SPI3ReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1);
-    if (status != 0)
+    mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
+
+    int status = 0;
+    uint32_t timeout = 0;
+    while (spiData != 0)
     {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
-    }
-    else
-    {
-        uint32_t timeout = 0;
-        while (spiData != 0)
+        if (!(spiData & S25FL256_RegisterRDSR1_WIP))
         {
-            if (!(spiData & S25FL256_RegisterRDSR1_WIP))
+            if (spiData & S25FL256_RegisterRDSR1_WEL)
             {
-                if (spiData & S25FL256_RegisterRDSR1_WEL)
-                {
-                    // If write enable is latched and flash is not busy, we are ok to continue for a write or an erase.
-                    break;
-                }
-                else
-                {
-                    if (inStatusFlag == S25FL256_RegisterRDSR1_WEL)
-                    {
-                        status = kBoardConfigError_FlashWNE;
-                    }
-                }
-            }
-
-            if (spiData & S25FL256_RegisterRDSR1_E_ERR)
-            {
-                status = kBoardConfigError_FlashErase;
-            }
-
-            if (spiData & S25FL256_RegisterRDSR1_P_ERR)
-            {
-                status = kBoardConfigError_FlashProg;
-            }
-
-            if ((timeout ++) > kS25FL256Timeout)
-            {
-                status = kBoardConfigError_FlashBusy;
-            }
-
-            if (status != 0)
-            {
-                PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
+                // If write enable is latched and flash is not busy, we are ok to continue for a write or an erase.
                 break;
             }
-
-            status = SPI3ReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1);
+            else
+            {
+                if (inStatusFlag == S25FL256_RegisterRDSR1_WEL)
+                {
+                    status = kIOMod_DriverError | kIOModError_FlashWNE;
+                    break;
+                }
+            }
         }
+
+        if (spiData & S25FL256_RegisterRDSR1_E_ERR)
+        {
+            status = kIOMod_DriverError | kIOModError_FlashErase;
+            break;
+        }
+
+        if (spiData & S25FL256_RegisterRDSR1_P_ERR)
+        {
+            status = kIOMod_DriverError | kIOModError_FlashProg;
+            break;
+        }
+
+        if ((timeout ++) > kS25FL256Timeout)
+        {
+            status = kIOMod_DriverError | kIOModError_FlashBusy;
+            break;
+        }
+
+        mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
     }
 
     return status;
@@ -172,13 +150,8 @@ static int S25FL256CheckStatus(uint8_t inStatusFlag)
 static int S25FL256WriteEnable(void)
 {
     uint8_t data;
-    int status = SPI3WriteRegister(kS25FL256_RegisterWREN, &data, 0, kSPIPacketIsComplete);
-    if (status != 0)
-    {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
-    }
-
-    return status;
+    mIOValidateBus(SPIWriteRegister(kS25FL256_RegisterWREN, &data, 0, kSPIPacketIsComplete));
+    return 0;
 }
 
 // ----------------------------------------------------------------------------
@@ -188,8 +161,8 @@ int S25FL256Init(void)
 
     if (!gIsMasterConfigDriverInitialized)
     {
-        // Setup SPI3 driver.
-        SPI3Setup();
+        // Setup SPI driver.
+        SPISetup();
 
         status = S25FL256BusyWait();
         if (status == 0)
@@ -207,7 +180,7 @@ int S25FL256Init(void)
 // ----------------------------------------------------------------------------
 int S25FL256Erase4K(uint32_t inAddress)
 {
-    mValidateParam(inAddress >= 0 && inAddress <= kS25FL256_4KSectorLast);
+    mIOAssertArg(inAddress >= 0 && inAddress <= kS25FL256_4KSectorLast);
 
     int status = S25FL256WriteEnable();
     status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
@@ -218,7 +191,7 @@ int S25FL256Erase4K(uint32_t inAddress)
     sectorAddress[2] = inAddress >> 8;
     sectorAddress[3] = inAddress & 0xFF;
 
-    status = SPI3WriteRegister(kS25FL256_Register4P4E, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete);
+    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4P4E, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete));
 
     return status;
 }
@@ -235,14 +208,14 @@ int S25FL256Erase64K(uint32_t inAddress)
     sectorAddress[2] = inAddress >> 8;
     sectorAddress[3] = inAddress & 0xFF;
 
-    status = SPI3WriteRegister(kS25FL256_Register4SE, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete);
+    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4SE, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete));
 
     // Wait until erase is done. TODO: Add timeout.
     do
     {
         status = S25FL256BusyWait();
     }
-    while (status == kBoardConfigError_FlashBusy);
+    while (status == kIOModError_FlashBusy);
 
     return status;
 }
@@ -250,37 +223,24 @@ int S25FL256Erase64K(uint32_t inAddress)
 // ----------------------------------------------------------------------------
 int S25FL256PageWrite(uint32_t inAddress, uint8_t* inData, uint32_t inSize)
 {
+    mIOAssertArg(inSize <= gS25FL256.pageSize);
+
     // FIXME: S25FL256CheckStatus does not do the job.
     S25FL256BusyWait();
-    int status = 0;
-    if (inSize <= gS25FL256.pageSize)
-    {
-        uint8_t sectorAddress[4] = { 0 };
-        sectorAddress[0] = inAddress >> 24;
-        sectorAddress[1] = inAddress >> 16;
-        sectorAddress[2] = inAddress >> 8;
-        sectorAddress[3] = inAddress & 0xFF;
 
-        status = S25FL256WriteEnable();
-        status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
+    uint8_t sectorAddress[4] = { 0 };
+    sectorAddress[0] = inAddress >> 24;
+    sectorAddress[1] = inAddress >> 16;
+    sectorAddress[2] = inAddress >> 8;
+    sectorAddress[3] = inAddress & 0xFF;
 
-        // Send address.
-        status = SPI3WriteRegister(kS25FL256_Register4PP, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete);
-        if (status != 0)
-        {
-            return status;
-        }
-        // Send data.
-        status = SPI3WriteRegister(kS25FL256_Register4PP, inData, inSize, kSPIPacketIsComplete);
-        if (status != 0)
-        {
-            return status;
-        }
-    }
-    else
-    {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, "Out of boundaries");
-    }
+    int status = S25FL256WriteEnable();
+    status |= S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
+
+    // Send address.
+    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4PP, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete));
+    // Send data.
+    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4PP, inData, inSize, kSPIPacketIsComplete));
 
     return status;
 }
@@ -296,19 +256,11 @@ int S25FL256PageRead(uint32_t inAddress, uint8_t* outData, uint32_t inSize)
 
     S25FL256BusyWait();
     // Send address.
-    int status = SPI3WriteRegister(kS25FL256_Register4READ, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete);
-    if (status != 0)
-    {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
-    }
+    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4READ, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete));
 
-    status = SPI3ReadRegister(kS25FL256_Register4READ, outData, inSize);
-    if (status != 0)
-    {
-        PrintMessage("%s - Error: %s\n", __FUNCTION__, ParseErrorMessage(status));
-    }
+    mIOValidateBus(SPIReadRegister(kS25FL256_Register4READ, outData, inSize));
 
-    return status;
+    return 0;
 }
 
 // ----------------------------------------------------------------------------
