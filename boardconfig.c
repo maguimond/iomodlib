@@ -18,12 +18,10 @@
 
 // Standard includes
 #include <string.h>
-#include <stdbool.h>
 
 // Lib includes.
 #include "iomodconfig.h"
 #include "boardconfig.h"
-#include "uprint.h"
 #include "crc16.h"
 #include "version.h"
 
@@ -49,7 +47,7 @@ static int MasterConfigCommit(void)
         status = mMasterConfigPageWrite(addressIndex, gMasterConfigShadowRAM + addressIndex, kMasterConfigTotalSize);
         if (status != 0)
         {
-            PrintMessage("%s%s%04x\n", __FUNCTION__, " - err: ", status);
+            mBoardConfigPrintDriverError("Commit failed");
             return status;
         }
     }
@@ -64,17 +62,17 @@ int MasterConfigInit(uint8_t inSlaveCount)
     int status = mMasterConfigSetup();
     if (status != 0)
     {
-        PrintMessage("%s%s%04x\n", __FUNCTION__, " - err: ", status);
+        mBoardConfigPrintDriverError("Status=%04x", status);
         return status;
     }
 
-    // Read NVM in shadown RAM.
+    // Read NVM in shadow RAM.
     for (uint32_t addressIndex = kMasterConfigStartAddress; addressIndex < kMasterConfigTotalSize; addressIndex += kMasterConfigPageSize)
     {
         status = mMasterConfigPageRead(addressIndex, gMasterConfigShadowRAM + addressIndex, kMasterConfigPageSize);
         if (status != 0)
         {
-            PrintMessage("%s%s%04x\n", __FUNCTION__, " - err: ", status);
+            mBoardConfigPrintDriverError("Status=%04x", status);
             return status;
         }
     }
@@ -86,28 +84,29 @@ int MasterConfigInit(uint8_t inSlaveCount)
     // Validate config.
     if (*(uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic) != mHTONS(kBoardConfig_MagicNumber))
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - warning: Bad magic");
+        mBoardConfigPrintWarning("Bad magic");
         isConfigValid = false;
     }
     else if (gMasterConfigShadowRAM[kMasterConfig_FlashLayout] != kVersionConfigLayout)
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - warning: Unsupported layout");
+        mBoardConfigPrintWarning("Unsupported layout");
         isConfigValid = false;
     }
     else if (mHTONS(crc) != *((uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_CRC)))
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - warning: Bad CRC");
+        mBoardConfigPrintWarning("Bad CRC");
         isConfigValid = false;
     }
     else
     {
+        mBoardConfigPrintInfo("Config valid");
         isConfigValid = true;
     }
 
     // Overwrite shadow contents if NVM values were not valid.
     if (!isConfigValid)
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - notice: Forcing default values");
+        mBoardConfigPrintInfo("Forcing default values");
         mMasterConfigSetDefaults(inSlaveCount, gMasterConfigShadowRAM);
         // Write changes back to NVM.
         status = MasterConfigCommit();
@@ -124,26 +123,26 @@ void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Initialization not complete");
+        mBoardConfigPrintInitError("Init incomplete");
         return;
     }
 
     // Validate address and size arguments.
     if (inSize > kMasterConfigPageSize)
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Bad page size");
+        mBoardConfigPrintPageError("Bad page size");
         return;
     }
 
     if (((inAddress / kMasterConfigPageSize) != ((inAddress + inSize) / kMasterConfigPageSize)) && ((inAddress + inSize) % kMasterConfigPageSize))
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Write across pages");
+        mBoardConfigPrintPageError("Write across pages");
         return;
     }
 
     mBoardConfigLock();
 
-    // Perform the write in shadown RAM
+    // Perform the write in shadow RAM
     memcpy(gMasterConfigShadowRAM + inAddress, inData, inSize);
 
     // Recompute the CRC
@@ -160,14 +159,14 @@ void MasterConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
-        PrintMessage("%s%s%\n", __FUNCTION__, " - err: Initialization not complete");
+        mBoardConfigPrintInitError("Init incomplete");
         memset(outData, 0, inSize);
         return;
     }
 
     mBoardConfigLock();
 
-    // Perform the read from shadown RAM.
+    // Perform the read from shadow RAM.
     memcpy(outData, gMasterConfigShadowRAM + inAddress, inSize);
 
     mBoardConfigUnlock();
