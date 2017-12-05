@@ -224,6 +224,7 @@ int S25FL256Erase64K(uint32_t inAddress)
 int S25FL256PageWrite(uint32_t inAddress, uint8_t* inData, uint32_t inSize)
 {
     mIOAssertArg(inSize <= gS25FL256.pageSize);
+    mIOAssertArg(inAddress <= kS25FL256_64KSectorLast);
 
     // FIXME: S25FL256CheckStatus does not do the job.
     S25FL256BusyWait();
