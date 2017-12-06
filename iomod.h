@@ -64,6 +64,8 @@ int IOModADCInit(uint8_t inSlaveID);
 ///
 int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 ///
+int IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData);
+///
 int IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 
 #endif // IOMOD_H_

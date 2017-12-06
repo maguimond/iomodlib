@@ -179,6 +179,8 @@ typedef enum
 #define kADC128D818_RegisterChannel6Read 0x26
 #define kADC128D818_RegisterChannel7Read 0x27
 
+#define kADC128D818_TemperatureMSBMask 0x0100
+
 // Limit registers. Set the limits for the voltage and temperature channels, R/W, 8-bit.
 #define kADC128D818_RegisterChannel0LimitHigh 0x2A
 #define kADC128D818_RegisterChannel0LimitLow 0x2B
@@ -234,6 +236,8 @@ typedef struct
 // ----------------------------------------------------------------------------
 ///
 int ADC128D818Init(uint8_t inADCAddress);
+///
+int ADC128D818SetMode(uint8_t inADCAddress, uint8_t inMode);
 ///
 int ADC128D818StartConversion(uint8_t inADCAddress, uint8_t inMode);
 ///

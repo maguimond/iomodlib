@@ -129,6 +129,18 @@ int ADC128D818Init(uint8_t inADCAddress)
 }
 
 // ----------------------------------------------------------------------------
+int ADC128D818SetMode(uint8_t inADCAddress, uint8_t inMode)
+{
+    mIOAssertArg(mADC128D818IsMode(inMode));
+
+    uint8_t i2cData = (inMode << 1) | kADC128D818_RegisterAdvancedConfiguration_ExternalReferenceEnable;
+
+    int status = I2CWriteRegister(inADCAddress, kADC128D818_RegisterAdvancedConfiguration, &i2cData, 1);
+
+    return status;
+}
+
+// ----------------------------------------------------------------------------
 int ADC128D818StartConversion(uint8_t inADCAddress, uint8_t inMode)
 {
     mIOAssertArg(mADC128D818IsConversionRate(inMode));

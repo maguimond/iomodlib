@@ -84,7 +84,7 @@ int IOModADCInit(uint8_t inSlaveID)
 // ----------------------------------------------------------------------------
 int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
 {
-    int status;
+    int status = 0;
     int32_t temperature = 0;
     uint16_t adcRawData;
 
@@ -103,6 +103,40 @@ int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADC
 
     // If we make it this far, its a success.
     return status;
+}
+
+// ----------------------------------------------------------------------------
+int IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData)
+{
+    uint16_t adcRawData;
+
+    mIOModValidateDriverStatus(ADC128D818SetMode(gADCI2CAddressTable[inSlaveID], kADC128D818_Mode_Temp));
+    // TODO: Wait for conversion switch to stabilize.
+    DelayUs(30000);
+    mIOModValidateDriverStatus(ADC128D818ReadChannel(gADCI2CAddressTable[inSlaveID], kADC128D818_RegisterChannel7Read, &adcRawData));
+    // TODO: Should put back in the config mode it was instead of forcing back single ended.
+    mIOModValidateDriverStatus(ADC128D818SetMode(gADCI2CAddressTable[inSlaveID], kADC128D818_Mode_SingleEnded));
+
+    // Shift right 3 as we pass from 12 bit to 9 bit result for internal temperature.
+    adcRawData >>= 3;
+
+    // 9-bit two's-complement conversions of the temperature (see datasheet p.28).
+    // Note: Normal conversion x 1000 to add 3 float digits to be compatible with single-ended ADC conversions (however precision is 0.5C, thus 500).
+    if (!(adcRawData & kADC128D818_TemperatureMSBMask))
+    {
+        // If temperature is positive.
+        // If DOUT[MSb] = 0: + Temp(°C) = DOUT(dec) / 2.
+        *outADCData = (adcRawData * 1000) >> 1;
+    }
+    else
+    {
+        // If temperature is negative.
+        // If DOUT[MSb] = 1: – Temp(°C) = [29 – DOUT(dec)] / 2 .
+        *outADCData = -(int32_t)(((0x0200 - adcRawData) * 1000) >> 1);
+    }
+
+    // If we make it this far, its a success.
+    return 0;
 }
 
 // ----------------------------------------------------------------------------
