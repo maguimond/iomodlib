@@ -285,6 +285,82 @@ void LCDAppendText(char* inTextPointer)
 }
 
 // ----------------------------------------------------------------------------
+void LCDPutTextSize(uint16_t inColumn, uint16_t inLine, const char* inTextPointer, uint32_t inSize)
+{
+    gTextBox.cursorX = inColumn;
+    gTextBox.cursorY = inLine;
+
+    // Send the string character by character on lCD.
+    while ((inSize --) != 0)
+    {
+        if (*inTextPointer == '\r')
+        {
+            // Return.
+            gTextBox.cursorX = gTextBox.startPosX;
+            inTextPointer ++;
+            continue;
+        }
+        else if (*inTextPointer == '\n')
+        {
+            // New line.
+            gTextBox.cursorY += gLCD.font->height;
+            gTextBox.cursorX = gTextBox.startPosX;
+            inTextPointer ++;
+            continue;
+        }
+
+        if (gLCD.textWrap == kLCDTextWrapping_Character)
+        {
+            if ((gTextBox.cursorX + gLCD.font->width) > gLCD.width)
+            {
+                // Wrap on character screen width overflow.
+                gTextBox.cursorX = gTextBox.startPosX;
+                gTextBox.cursorY += gLCD.font->height;
+                if (*inTextPointer == ' ')
+                {
+                    // Skip overflow on space.
+                    inTextPointer ++;
+                    continue;
+                }
+            }
+        }
+        else
+        {
+            // Wrap on word.
+            uint8_t str_char_nb;
+            // Count characters in a word.
+            // FIXME: If none of the above, will loop indefinitely.
+            for (str_char_nb = 1; (*(inTextPointer + str_char_nb) != ' ') && (*(inTextPointer + str_char_nb) != '\0') &&
+                                  (*(inTextPointer + str_char_nb) != '\r') && (*(inTextPointer + str_char_nb) != '\n'); str_char_nb ++);
+
+            if (gTextBox.cursorX + str_char_nb * gLCD.font->width > gLCD.width)
+            {
+                // Wrap on word screen width overflow.
+                gTextBox.cursorX = gTextBox.startPosX;
+                gTextBox.cursorY += gLCD.font->height;
+                if (*inTextPointer == ' ')
+                {
+                    // Skip new line starting with space.
+                    inTextPointer ++;
+                    continue;
+                }
+            }
+        }
+
+        // Display one character on LCD and point to next character.
+        LCDPutChar(gTextBox.cursorX, gTextBox.cursorY, *inTextPointer ++);
+        // Increment horizontal position for next character.
+        gTextBox.cursorX += gLCD.font->width;
+    }
+}
+
+// ----------------------------------------------------------------------------
+void LCDAppendTextSize(char* inTextPointer, uint32_t inSize)
+{
+    LCDPutTextSize(gTextBox.cursorX, gTextBox.cursorY, inTextPointer, inSize);
+}
+
+// ----------------------------------------------------------------------------
 void LCDSetTextStartPosition(uint16_t inColumn, uint16_t inLine)
 {
     gTextBox.startPosX = gTextBox.cursorX = inColumn;
