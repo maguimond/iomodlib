@@ -166,36 +166,36 @@ typedef enum
 
 /// Read Flash Array.
 
-// Read (3- or 4-byte address)
+// Read (3- or 4-byte address).
 #define kS25FL256_RegisterREAD      0x03
 
-// Read (4-byte address)
+// Read (4-byte address), max 50MHz.
 #define kS25FL256_Register4READ     0x13
 
-// Fast Read (3- or 4-byte address)
+// Fast Read (3- or 4-byte address), max 133MHz.
 #define kS25FL256_RegisterFASTREAD  0x0B
 
-// Fast Read (4-byte address)
+// Fast Read (4-byte address).
 #define kS25FL256_Register4FASTREAD 0x0C
 
-// DDR Fast Read (3- or 4-byte address)
+// DDR Fast Read (3- or 4-byte address).
 #define kS25FL256_RegisterDDRFR     0x0D
 
-// DDR Fast Read (4-byte address)
+// DDR Fast Read (4-byte address).
 #define kS25FL256_Register4DDRFR    0x0E
 
-// Read Dual Out (3- or 4-byte address)
+// Read Dual Out (3- or 4-byte address).
 #define kS25FL256_RegisterDOR       0x3B
 
-// Read Dual Out (4-byte address)
+// Read Dual Out (4-byte address).
 #define kS25FL256_Register4DOR      0x3C
 
 /// Program Flash Array.
 
-// Page Program (3- or 4-byte address)
+// Page Program (3- or 4-byte address).
 #define kS25FL256_RegisterPP        0x02
 
-// Page Program (4-byte address)
+// Page Program (4-byte address).
 #define kS25FL256_Register4PP       0x12
 
 /// Erase Flash Array.
