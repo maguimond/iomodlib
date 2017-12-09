@@ -20,6 +20,7 @@
 #include "string.h"
 
 // Lib includes.
+#include "iomodconfig.h"
 #include "iomodutils.h"
 
 // Driver includes.
@@ -39,9 +40,12 @@ static bool gIsMasterConfigDriverInitialized;
 // ----------------------------------------------------------------------------
 static int S25FL256ReadInfo(void)
 {
-    uint8_t spiData[6] = { 0 };
+    uint8_t spiData[6] = { kS25FL256_RegisterRDID };
 
-    int status = SPIReadRegister(kS25FL256_RegisterRDID, spiData, 6);
+    mFlashCSLow();
+    int status = SPIReadData(kS25FL256_RegisterRDID, spiData, 6);
+    mFlashCSHigh();
+
     if (status == 0)
     {
         gS25FL256.manufacturerID = spiData[S25FL256_RegisterRDID_ManufacturerID];
@@ -77,13 +81,17 @@ static int S25FL256ReadInfo(void)
 int S25FL256BusyWait(void)
 {
     uint8_t spiData = 0;
-    mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
+    mFlashCSLow();
+    mIOValidateBus(SPIReadData(kS25FL256_RegisterRDSR1, &spiData, 1))
+    mFlashCSHigh();
 
     int status = 0;
     uint32_t timeout = 0;
     while (spiData & S25FL256_RegisterRDSR1_WIP)
     {
-        mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
+        mFlashCSLow();
+        mIOValidateBus(SPIReadData(kS25FL256_RegisterRDSR1, &spiData, 1))
+        mFlashCSHigh();
 
         if ((timeout ++) > kS25FL256Timeout)
         {
@@ -99,7 +107,9 @@ int S25FL256BusyWait(void)
 static int S25FL256CheckStatus(uint8_t inStatusFlag)
 {
     uint8_t spiData = 0;
-    mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
+    mFlashCSLow();
+    mIOValidateBus(SPIReadData(kS25FL256_RegisterRDSR1, &spiData, 1))
+    mFlashCSHigh();
 
     int status = 0;
     uint32_t timeout = 0;
@@ -140,7 +150,9 @@ static int S25FL256CheckStatus(uint8_t inStatusFlag)
             break;
         }
 
-        mIOValidateBus(SPIReadRegister(kS25FL256_RegisterRDSR1, &spiData, 1));
+        mFlashCSLow();
+        mIOValidateBus(SPIReadData(kS25FL256_RegisterRDSR1, &spiData, 1))
+        mFlashCSHigh();
     }
 
     return status;
@@ -149,8 +161,13 @@ static int S25FL256CheckStatus(uint8_t inStatusFlag)
 // ----------------------------------------------------------------------------
 static int S25FL256WriteEnable(void)
 {
-    uint8_t data;
-    mIOValidateBus(SPIWriteRegister(kS25FL256_RegisterWREN, &data, 0, kSPIPacketIsComplete));
+    uint8_t flashData = kS25FL256_RegisterWREN;
+
+    mFlashCSLow();
+    mIOValidateBus(SPIWriteData(&flashData, 1));
+    mFlashCSHigh();
+
+    // If we make it this far, its a success.
     return 0;
 }
 
@@ -185,13 +202,19 @@ int S25FL256Erase4K(uint32_t inAddress)
     int status = S25FL256WriteEnable();
     status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
 
+    uint8_t flashData = kS25FL256_Register4P4E;
     uint8_t sectorAddress[4] = { 0 };
     sectorAddress[0] = inAddress >> 24;
     sectorAddress[1] = inAddress >> 16;
     sectorAddress[2] = inAddress >> 8;
     sectorAddress[3] = inAddress & 0xFF;
 
-    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4P4E, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete));
+    mFlashCSLow();
+    // Write register.
+    mIOValidateBus(SPIWriteData(&flashData, 1));
+    // Write sector address to erase.
+    mIOValidateBus(SPIWriteData(sectorAddress, sizeof(sectorAddress)));
+    mFlashCSHigh();
 
     return status;
 }
@@ -202,13 +225,19 @@ int S25FL256Erase64K(uint32_t inAddress)
     int status = S25FL256WriteEnable();
     status = S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
 
+    uint8_t flashData = kS25FL256_Register4SE;
     uint8_t sectorAddress[4] = { 0 };
     sectorAddress[0] = inAddress >> 24;
     sectorAddress[1] = inAddress >> 16;
     sectorAddress[2] = inAddress >> 8;
     sectorAddress[3] = inAddress & 0xFF;
 
-    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4SE, sectorAddress, sizeof(sectorAddress), kSPIPacketIsComplete));
+    mFlashCSLow();
+    // Write register.
+    mIOValidateBus(SPIWriteData(&flashData, 1));
+    // Write sector address to erase.
+    mIOValidateBus(SPIWriteData(sectorAddress, sizeof(sectorAddress)));
+    mFlashCSHigh();
 
     // Wait until erase is done. TODO: Add timeout.
     do
@@ -229,6 +258,7 @@ int S25FL256PageWrite(uint32_t inAddress, uint8_t* inData, uint32_t inSize)
     // FIXME: S25FL256CheckStatus does not do the job.
     S25FL256BusyWait();
 
+    uint8_t flashData = kS25FL256_Register4PP;
     uint8_t sectorAddress[4] = { 0 };
     sectorAddress[0] = inAddress >> 24;
     sectorAddress[1] = inAddress >> 16;
@@ -238,10 +268,14 @@ int S25FL256PageWrite(uint32_t inAddress, uint8_t* inData, uint32_t inSize)
     int status = S25FL256WriteEnable();
     status |= S25FL256CheckStatus(S25FL256_RegisterRDSR1_WEL);
 
-    // Send address.
-    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4PP, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete));
-    // Send data.
-    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4PP, inData, inSize, kSPIPacketIsComplete));
+    mFlashCSLow();
+    // Write register.
+    mIOValidateBus(SPIWriteData(&flashData, 1));
+    // Write sector address to start the write from.
+    mIOValidateBus(SPIWriteData(sectorAddress, sizeof(sectorAddress)));
+    // Write data.
+    mIOValidateBus(SPIWriteData(inData, inSize));
+    mFlashCSHigh();
 
     return status;
 }
@@ -249,6 +283,7 @@ int S25FL256PageWrite(uint32_t inAddress, uint8_t* inData, uint32_t inSize)
 // ----------------------------------------------------------------------------
 int S25FL256PageRead(uint32_t inAddress, uint8_t* outData, uint32_t inSize)
 {
+    uint8_t flashData = kS25FL256_Register4READ;
     uint8_t sectorAddress[4] = { 0 };
     sectorAddress[0] = inAddress >> 24;
     sectorAddress[1] = inAddress >> 16;
@@ -256,11 +291,17 @@ int S25FL256PageRead(uint32_t inAddress, uint8_t* outData, uint32_t inSize)
     sectorAddress[3] = inAddress & 0xFF;
 
     S25FL256BusyWait();
-    // Send address.
-    mIOValidateBus(SPIWriteRegister(kS25FL256_Register4READ, sectorAddress, sizeof(sectorAddress), kSPIPacketIsIncomplete));
 
-    mIOValidateBus(SPIReadRegister(kS25FL256_Register4READ, outData, inSize));
+    mFlashCSLow();
+    // Write register.
+    mIOValidateBus(SPIWriteData(&flashData, 1));
+    // Write sector address to start the write from.
+    mIOValidateBus(SPIWriteData(sectorAddress, sizeof(sectorAddress)));
+    // Write data.
+    mIOValidateBus(SPITransfer(outData, inSize));
+    mFlashCSHigh();
 
+    // If we make it this far, its a success.
     return 0;
 }
 
