@@ -204,7 +204,7 @@ void LCDAppendText(char* text_ptr);
 ///
 void LCDPutTextSize(uint16_t inColumn, uint16_t inLine, const char* inTextPointer, uint32_t inSize);
 ///
-void LCDAppendTextSize(char* inTextPointer, uint32_t inSize);
+void LCDAppendTextSize(const char* inTextPointer, uint32_t inSize);
 ///
 void LCDSetTextStartPosition(uint16_t inColumn, uint16_t inLine);
 ///

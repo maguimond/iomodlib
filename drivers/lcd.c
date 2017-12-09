@@ -355,7 +355,7 @@ void LCDPutTextSize(uint16_t inColumn, uint16_t inLine, const char* inTextPointe
 }
 
 // ----------------------------------------------------------------------------
-void LCDAppendTextSize(char* inTextPointer, uint32_t inSize)
+void LCDAppendTextSize(const char* inTextPointer, uint32_t inSize)
 {
     LCDPutTextSize(gTextBox.cursorX, gTextBox.cursorY, inTextPointer, inSize);
 }
