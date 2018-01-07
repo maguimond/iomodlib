@@ -210,8 +210,6 @@ void LCDSetTextStartPosition(uint16_t inColumn, uint16_t inLine);
 ///
 void LCDDrawMonoImage(const uint32_t* pict);
 ///
-void LCDDrawBMP(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, uint16_t inXOffset, uint16_t inYOffset);
-///
 void LCDDrawImage(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, uint16_t inXOffset, uint16_t inYOffset);
 ///
 void LCDDrawFade(uint16_t inColor);

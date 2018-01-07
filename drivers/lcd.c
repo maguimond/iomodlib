@@ -390,33 +390,16 @@ void LCDDrawMonoImage(const uint32_t *pict)
 }
 
 // ----------------------------------------------------------------------------
-void LCDDrawBMP(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, uint16_t inXOffset, uint16_t inYOffset)
-{
-    uint32_t index = 0;
-    /*TODO: create fade in function.
-    for (index = 0; index < (10 * (inWidth * inHeight)); index ++)
-    {
-        uint16_t random_x = (Random16() % inWidth);
-        uint16_t random_y = (Random16() % inHeight);
-        mLCDSetCursor(random_x + inXOffset, random_y + inYOffset, gLCD.width, gLCD.height);
-        mLCDAccessGRAM();
-        mLCDWriteData(inImage[(random_y * inWidth) + (random_x - 1)]);
-    }*/
-    mLCDAccessGRAM();
-    for (index = 0; index < (inWidth * inHeight); index ++)
-    {
-        mLCDWriteData(inImage[index]);
-    }
-}
-
-// ----------------------------------------------------------------------------
 void LCDDrawImage(const uint16_t* inImage, uint16_t inWidth, uint16_t inHeight, uint16_t inXOffset, uint16_t inYOffset)
 {
-    for (uint16_t xIndex = 0; xIndex < inWidth; xIndex ++)
+    uint32_t pixelIndex = 0;
+    for (uint16_t yIndex = 0; yIndex < inHeight; yIndex ++)
     {
-        for (uint16_t yIndex = 0; yIndex < inHeight; yIndex ++)
+        mLCDSetCursor(inXOffset, inYOffset + yIndex, gLCD.width, gLCD.height);
+        mLCDAccessGRAM();
+        for (uint16_t xIndex = 0; xIndex < inWidth; xIndex ++)
         {
-            LCDPutPixel(xIndex + inXOffset, yIndex + inYOffset, inImage[(yIndex * inWidth) + (xIndex - 1)]);
+            mLCDWriteData(inImage[pixelIndex ++]);
         }
     }
 }
