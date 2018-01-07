@@ -440,6 +440,18 @@ void LCDClearScreen(void)
 }
 
 // ----------------------------------------------------------------------------
+void LCDClearScreenSector(uint16_t inPositionY)
+{
+    mLCDSetCursor(0, inPositionY, gLCD.width, gLCD.height);
+    mLCDAccessGRAM();
+    uint32_t pixelIndex = inPositionY * gLCD.width;
+    for (; pixelIndex < kLCDHeight * kLCDWidth; pixelIndex ++)
+    {
+        mLCDWriteData(gLCD.background);
+    }
+}
+
+// ----------------------------------------------------------------------------
 void LCDClearLine(uint16_t inLine, uint8_t inLineWidth)
 {
     uint16_t ref_line = inLine;
@@ -456,14 +468,14 @@ void LCDDrawLine(uint16_t inPositionX, uint16_t inPositionY, uint16_t inLength, 
     if (inDirection == kLCDDirection_Horizontal)
     {
         mLCDAccessGRAM();
-        for (uint32_t index = 0; index < inLength; index ++)
+        for (uint32_t pixelIndex = 0; pixelIndex < inLength; pixelIndex ++)
         {
             mLCDWriteData(inColor);
         }
     }
     else
     {
-        for (uint32_t index = 0; index < inLength; index ++)
+        for (uint32_t pixelIndex = 0; pixelIndex < inLength; pixelIndex ++)
         {
             LCDPutPixel(inPositionX, inPositionY, inColor);
             inPositionY ++;

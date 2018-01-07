@@ -47,7 +47,8 @@
 #define kLCDColor_Yellow 0xFFE0
 #define kLCDColor_Orange 0xFBE4
 #define kLCDColor_Grey 0xF7DE
-#define kLCDColor_Grey2 0x7BEF
+#define kLCDColor_Grey2 0x7432
+#define kLCDColor_Grey3 0x7BEF
 #define kLCDColor_White 0xFFFF
 
 // LCD Direction
@@ -217,6 +218,8 @@ void LCDDrawFade(uint16_t inColor);
 void LCDFillScreen(uint16_t inColor);
 ///
 void LCDClearScreen(void);
+///
+void LCDClearScreenSector(uint16_t inPositionY);
 ///
 void LCDClearLine(uint16_t line, uint8_t line_with);
 ///
