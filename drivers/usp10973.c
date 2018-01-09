@@ -39,26 +39,34 @@ int USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperatu
     double valueT1 = 0;
 
     // Apply coefficients according to the resistance range.
-    if ((valueR2 <= kR1M40_0) && (valueR2 > kR10_50))
+    if ((valueR2 <= kR1_m40_0) && (valueR2 > kR1_0_50))
     {
         // Beta for [-40 0]C.
-        beta = (double)kBetaM40_0;
-        valueT1 = (double)kT1M40_0;
-        valueR1 = (double)kR1M40_0;
+        beta = (double)kBeta_m40_0;
+        valueT1 = (double)kT1_m40_0;
+        valueR1 = (double)kR1_m40_0;
     }
-    else if ((valueR2 <= kR10_50) && (valueR2 > kR150_100))
+    else if ((valueR2 <= kR1_0_50) && (valueR2 > kR1_50_100))
     {
         // Beta for [0 50]C.
-        beta = (double)kBeta0_50;
-        valueT1 = (double)kT10_50;
-        valueR1 = (double)kR10_50;
+        beta = (double)kBeta_0_50;
+        valueT1 = (double)kT1_0_50;
+        valueR1 = (double)kR1_0_50;
     }
-    else if ((valueR2 <= kR150_100) && (valueR2 >= kR1Min))
+    else if ((valueR2 <= kR1_50_100) && (valueR2 > kR1_100_150))
     {
         // Beta for [50 100]C.
-        beta = (double)kBeta50_100;
-        valueT1 = (double)kT150_100;
-        valueR1 = (double)kR150_100;
+        beta = (double)kBeta_50_100;
+        valueT1 = (double)kT1_50_100;
+        valueR1 = (double)kR1_50_100;
+    }
+    else if ((valueR2 <= kR1_100_150) && (valueR2 > kR1_150_200))
+    {
+        // Extended range (above 105 C).
+        // TODO: Calculate new beta.
+        beta = (double)kBeta_50_100;
+        valueT1 = (double)kT1_50_100;
+        valueR1 = (double)kR1_50_100;
     }
     else
     {
