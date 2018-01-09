@@ -60,12 +60,12 @@ typedef struct
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
-int IOModADCInit(uint8_t inSlaveID);
+IOModPortStatus_t IOModADCInit(uint8_t inSlaveID);
 ///
-int IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
+IOModPortStatus_t IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 ///
-int IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData);
+IOModPortStatus_t IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData);
 ///
-int IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
+IOModPortStatus_t IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 
 #endif // IOMOD_H_
