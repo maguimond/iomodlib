@@ -201,7 +201,7 @@ void LCDPutChar(uint16_t x, uint16_t y, char c);
 ///
 void LCDPutText(uint16_t inColumn, uint16_t inLine, const char* inTextPointer);
 ///
-void LCDAppendText(char* text_ptr);
+void LCDAppendText(char* inTextPointer);
 ///
 void LCDPutTextSize(uint16_t inColumn, uint16_t inLine, const char* inTextPointer, uint32_t inSize);
 ///
@@ -221,7 +221,7 @@ void LCDClearScreen(void);
 ///
 void LCDClearScreenSector(uint16_t inPositionY);
 ///
-void LCDClearLine(uint16_t line, uint8_t line_with);
+void LCDClearLine(uint16_t inLine, uint8_t inLineWidth);
 ///
 void LCDDrawLine(uint16_t inPositionX, uint16_t inPositionY, uint16_t inLength, uint8_t inDirection, uint16_t inColor);
 ///

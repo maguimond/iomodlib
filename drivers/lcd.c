@@ -308,6 +308,14 @@ void LCDPutTextSize(uint16_t inColumn, uint16_t inLine, const char* inTextPointe
             inTextPointer ++;
             continue;
         }
+        else if (*inTextPointer == '\0')
+        {
+            // If inSize is larger than the actual string, write nothing (used to overwrite a previous string).
+            LCDPutChar(gTextBox.cursorX, gTextBox.cursorY, ' ');
+            // Increment horizontal position for next character.
+            gTextBox.cursorX += gLCD.font->width;
+            break;
+        }
 
         if (gLCD.textWrap == kLCDTextWrapping_Character)
         {
