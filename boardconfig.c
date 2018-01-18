@@ -24,27 +24,32 @@
 #include "boardconfig.h"
 #include "crc16.h"
 #include "version.h"
+#include "ufs.h" // TODO: Remove.
 
 // ----------------------------------------------------------------------------
 // Private variables.
 static bool gIsBoardConfigInitDone = false;
 
 // Shadow RAM.
-static uint8_t gMasterConfigShadowRAM[kMasterConfigTotalSize];
+static uint8_t gBoardConfigShadowRAM[kBoardConfigTotalSize];
 
 // ----------------------------------------------------------------------------
-static int MasterConfigCommit(void)
+static int BoardConfigCommit(void)
 {
-    // TODO: REMOVE, use config tool
-    // Compute CRC.
-    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kBoardConfig_MasterUserSize);
-    *((uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_CRC)) = mHTONS(crc);
+    // Erase sector.
+    int status = S25FL256Erase4K(kPartition_1_FirstSector);
 
-    int status = 0;
+    // TODO: REMOVE, use config tool
+    // Compute CRCs.
+    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_FactoryAddressOffset), kBoardConfig_FactorySize);
+    *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_Factory_CRC)) = mHTONS(crc);
+    crc = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
+    *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_User_CRC)) = mHTONS(crc);
+
     // Write shadow RAM to NVM.
-    for (uint32_t addressIndex = kMasterConfig_Magic; addressIndex < kMasterConfigTotalSize; addressIndex += kMasterConfigPageSize)
+    for (uint32_t addressIndex = kBoardConfig_Factory_Magic; addressIndex < kBoardConfigTotalSize; addressIndex += kBoardConfigPageSize)
     {
-        status = mMasterConfigPageWrite(addressIndex, gMasterConfigShadowRAM + addressIndex, kMasterConfigTotalSize);
+        status = mBoardConfigPageWrite(addressIndex, gBoardConfigShadowRAM + addressIndex, kBoardConfigPageSize);
         if (status != 0)
         {
             mBoardConfigPrintDriverError("Commit failed");
@@ -56,10 +61,10 @@ static int MasterConfigCommit(void)
 }
 
 // ----------------------------------------------------------------------------
-int MasterConfigInit(uint8_t inSlaveCount)
+int BoardConfigInit(uint8_t inAuxBoardCount)
 {
     // Setup HAL.
-    int status = mMasterConfigSetup();
+    int status = mBoardConfigSetup();
     if (status != 0)
     {
         mBoardConfigPrintDriverError("Status=%04x", status);
@@ -67,9 +72,9 @@ int MasterConfigInit(uint8_t inSlaveCount)
     }
 
     // Read NVM in shadow RAM.
-    for (uint32_t addressIndex = kMasterConfigStartAddress; addressIndex < kMasterConfigTotalSize; addressIndex += kMasterConfigPageSize)
+    for (uint32_t addressIndex = kBoardConfigStartAddress; addressIndex < kBoardConfigTotalSize; addressIndex += kBoardConfigPageSize)
     {
-        status = mMasterConfigPageRead(addressIndex, gMasterConfigShadowRAM + addressIndex, kMasterConfigPageSize);
+        status = mBoardConfigPageRead(addressIndex, gBoardConfigShadowRAM + addressIndex, kBoardConfigPageSize);
         if (status != 0)
         {
             mBoardConfigPrintDriverError("Status=%04x", status);
@@ -78,38 +83,45 @@ int MasterConfigInit(uint8_t inSlaveCount)
     }
 
     // Validate config retrieved from NVM.
-    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kBoardConfig_MasterUserSize);
-    bool isConfigValid = false;
+    uint16_t factoryCRC = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_FactoryAddressOffset), kBoardConfig_FactorySize);
+    uint16_t userCRC = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
 
     // Validate config.
-    if (*(uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic) != mHTONS(kBoardConfig_MagicNumber))
+    bool isConfigValid = false;
+    if (*(uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_Factory_Magic) != mHTONS(kBoardConfig_MagicNumber))
     {
         mBoardConfigPrintWarning("Bad magic");
         isConfigValid = false;
     }
-    else if (gMasterConfigShadowRAM[kMasterConfig_FlashLayout] != kVersionConfigLayout)
+    else if (gBoardConfigShadowRAM[kBoardConfig_Factory_FlashLayout] != kVersionConfigLayout)
     {
-        mBoardConfigPrintWarning("Unsupported layout");
+        mBoardConfigPrintWarning("Bad layout");
         isConfigValid = false;
     }
-    else if (mHTONS(crc) != *((uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_CRC)))
+    else if (mHTONS(factoryCRC) != *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_Factory_CRC)))
     {
-        mBoardConfigPrintWarning("Bad CRC");
+        mBoardConfigPrintWarning("Bad factory CRC");
+        isConfigValid = false;
+    }
+    else if (mHTONS(userCRC) != *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_User_CRC)))
+    {
+        mBoardConfigPrintWarning("Bad user CRC");
         isConfigValid = false;
     }
     else
     {
-        mBoardConfigPrintInfo("Config valid");
+        mBoardConfigPrintInfo("Loaded config");
         isConfigValid = true;
     }
 
     // Overwrite shadow contents if NVM values were not valid.
     if (!isConfigValid)
     {
-        mBoardConfigPrintInfo("Forcing default values");
-        mMasterConfigSetDefaults(inSlaveCount, gMasterConfigShadowRAM);
-        // Write changes back to NVM.
-        status = MasterConfigCommit();
+        mBoardConfigPrintInfo("Force defaults");
+        // Load defaults in shadow RAM.
+        mBoardConfigSetDefaults(inAuxBoardCount, gBoardConfigShadowRAM);
+        // Commit changes to NVM.
+        status = BoardConfigCommit();
     }
 
     // Finished boot-time initialization.
@@ -119,7 +131,7 @@ int MasterConfigInit(uint8_t inSlaveCount)
 }
 
 // ----------------------------------------------------------------------------
-void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
+void BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
@@ -128,13 +140,13 @@ void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
     }
 
     // Validate address and size arguments.
-    if (inSize > kMasterConfigPageSize)
+    if (inSize > kBoardConfigPageSize)
     {
         mBoardConfigPrintPageError("Bad page size");
         return;
     }
 
-    if (((inAddress / kMasterConfigPageSize) != ((inAddress + inSize) / kMasterConfigPageSize)) && ((inAddress + inSize) % kMasterConfigPageSize))
+    if (((inAddress / kBoardConfigPageSize) != ((inAddress + inSize) / kBoardConfigPageSize)) && ((inAddress + inSize) % kBoardConfigPageSize))
     {
         mBoardConfigPrintPageError("Write across pages");
         return;
@@ -143,19 +155,19 @@ void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
     mBoardConfigLock();
 
     // Perform the write in shadow RAM
-    memcpy(gMasterConfigShadowRAM + inAddress, inData, inSize);
+    memcpy(gBoardConfigShadowRAM + inAddress, inData, inSize);
 
     // Recompute the CRC
-    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gMasterConfigShadowRAM + kMasterConfig_Magic), kBoardConfig_MasterUserSize);
-    *((uint16_t*)(gMasterConfigShadowRAM + kMasterConfig_CRC)) = mHTONS(crc);
+    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
+    *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_User_CRC)) = mHTONS(crc);
 
-    mMasterConfigWrite(inAddress, inData, inSize, crc);
+    mBoardConfigWrite(inAddress, inData, inSize, crc);
 
     mBoardConfigUnlock();
 }
 
 // ----------------------------------------------------------------------------
-void MasterConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
+void BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
@@ -167,16 +179,16 @@ void MasterConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
     mBoardConfigLock();
 
     // Perform the read from shadow RAM.
-    memcpy(outData, gMasterConfigShadowRAM + inAddress, inSize);
+    memcpy(outData, gBoardConfigShadowRAM + inAddress, inSize);
 
     mBoardConfigUnlock();
 }
 
 // ----------------------------------------------------------------------------
-uint8_t MasterConfigReadByte(uint8_t inAddress)
+uint8_t BoardConfigReadByte(uint8_t inAddress)
 {
     uint8_t data;
-    MasterConfigRead(inAddress, &data, 1);
+    BoardConfigRead(inAddress, &data, 1);
 
     return data;
 }

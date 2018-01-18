@@ -24,6 +24,7 @@
 
 // User config.
 #include "boardconfiguser.h"
+#include "auxiliaryconfiguser.h"
 
 // ----------------------------------------------------------------------------
 // Data types
@@ -40,24 +41,24 @@ typedef struct
 // Function prototypes
 // ----------------------------------------------------------------------------
 /// Initialize the master, retrieve configuration from non-volatile memory.
-int MasterConfigInit(uint8_t inSlaveCount);
-/// Discover attached slave modules by reading EEPROM addresses.
-uint8_t SlaveDiscovery(uint8_t* outSlaveAddressMap);
-/// Initialize a slave card (selected by SlaveID), retrieve configuration from non-volatile memory.
-int SlaveConfigInit(uint8_t inSlaveID);
+int BoardConfigInit(uint8_t inSlaveCount);
 /// Write configuration data to master card.
-void MasterConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize);
+void BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize);
+///
+void BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize);
+///
+uint8_t BoardConfigReadByte(uint8_t inAddress);
+/// Discover attached slave modules by reading EEPROM addresses.
+uint8_t AuxBoardDiscovery(uint8_t* outSlaveAddressMap);
+/// Initialize a slave card (selected by SlaveID), retrieve configuration from non-volatile memory.
+int AuxBoardConfigInit(uint8_t inSlaveID);
 /// Write configuration data to a slave card (selected by inSlaveID).
-void SlaveConfigWrite(uint8_t inSlaveID, uint8_t inAddress, uint8_t* inData, uint8_t inSize);
+void AuxBoardConfigWrite(uint8_t inSlaveID, uint8_t inAddress, uint8_t* inData, uint8_t inSize);
 ///
-void MasterConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize);
+void AuxBoardConfigRead(uint8_t inSlaveID, uint8_t inAddress, uint8_t* outData, uint8_t inSize);
 ///
-void SlaveConfigRead(uint8_t inSlaveID, uint8_t inAddress, uint8_t* outData, uint8_t inSize);
+uint8_t AuxBoardConfigReadByte(uint8_t inSlaveID, uint8_t inAddress);
 ///
-uint8_t MasterConfigReadByte(uint8_t inAddress);
-///
-uint8_t SlaveConfigReadByte(uint8_t inSlaveID, uint8_t inAddress);
-///
-uint16_t SlaveConfigReadShort(uint8_t inSlaveID, uint8_t inAddress);
+uint16_t AuxBoardConfigReadShort(uint8_t inSlaveID, uint8_t inAddress);
 
 #endif // BOARDCONFIG_H_
