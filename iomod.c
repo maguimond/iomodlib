@@ -68,7 +68,7 @@ uint8_t IOModGetADCAddress(uint8_t inSlaveID)
 }
 
 // ----------------------------------------------------------------------------
-IOModPortStatus_t IOModADCInit(uint8_t inSlaveID)
+IOModPortStatus_e IOModADCInit(uint8_t inSlaveID)
 {
     // Get the slave ADC address.
     gADCI2CAddressTable[inSlaveID] = IOModGetADCAddress(inSlaveID);
@@ -82,7 +82,7 @@ IOModPortStatus_t IOModADCInit(uint8_t inSlaveID)
 }
 
 // ----------------------------------------------------------------------------
-IOModPortStatus_t IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
+IOModPortStatus_e IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
 {
     int status = 0;
     int32_t temperature = 0;
@@ -106,7 +106,7 @@ IOModPortStatus_t IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, i
 }
 
 // ----------------------------------------------------------------------------
-IOModPortStatus_t IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData)
+IOModPortStatus_e IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData)
 {
     uint16_t adcRawData;
 
@@ -140,7 +140,7 @@ IOModPortStatus_t IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADC
 }
 
 // ----------------------------------------------------------------------------
-IOModPortStatus_t IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
+IOModPortStatus_e IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData)
 {
     int status;
     int32_t current = 0;

@@ -29,14 +29,14 @@
 typedef enum
 {
     kIOModPortStatus_Valid,
-    kIOModPortStatus_NotDetected,
+    kIOModPortStatus_NotDetected, // TODO
     kIOModPortStatus_DriverBusError,
     kIOModPortStatus_InvalidRange,
     kIOModPortStatus_OverLoad,
-    kIOModPortStatus_OpenLoad,
+    kIOModPortStatus_OpenLoad, // TODO
     // Reserved for future use, keep last.
-    kIOModPortStatus_Reserved,
-} IOModPortStatus_t;
+    kIOModPortStatus_Max,
+} IOModPortStatus_e;
 
 // ----------------------------------------------------------------------------
 // Data types
@@ -60,12 +60,12 @@ typedef struct
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
-IOModPortStatus_t IOModADCInit(uint8_t inSlaveID);
+IOModPortStatus_e IOModADCInit(uint8_t inSlaveID);
 ///
-IOModPortStatus_t IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
+IOModPortStatus_e IOModGetTemperature(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 ///
-IOModPortStatus_t IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData);
+IOModPortStatus_e IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADCData);
 ///
-IOModPortStatus_t IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
+IOModPortStatus_e IOModGetCurrent(uint8_t inSlaveID, uint8_t inChannelIdx, int32_t* outADCData);
 
 #endif // IOMOD_H_
