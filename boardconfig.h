@@ -40,6 +40,8 @@ typedef struct
 // ----------------------------------------------------------------------------
 // Function prototypes
 // ----------------------------------------------------------------------------
+///
+int BoardConfigResetFactory(uint8_t inAuxBoardCount);
 /// Initialize the master, retrieve configuration from non-volatile memory.
 int BoardConfigInit(uint8_t inSlaveCount);
 /// Write configuration data to master card.
