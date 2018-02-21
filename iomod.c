@@ -41,22 +41,22 @@ uint8_t IOModGetADCAddress(uint8_t inSlaveID)
     uint8_t adcAddress;
     switch (inSlaveID)
     {
-        case kBoardConfig_AuxID1:
+        case 1:
             adcAddress = kADC128D818_SlaveAddress1;
             break;
-        case kBoardConfig_AuxID2:
+        case 2:
             adcAddress = kADC128D818_SlaveAddress2;
             break;
-        case kBoardConfig_AuxID3:
+        case 3:
             adcAddress = kADC128D818_SlaveAddress3;
             break;
-        case kBoardConfig_AuxID4:
+        case 4:
             adcAddress = kADC128D818_SlaveAddress4;
             break;
-        case kBoardConfig_AuxID5:
+        case 5:
             adcAddress = kADC128D818_SlaveAddress5;
             break;
-        case kBoardConfig_AuxID6:
+        case 6:
             adcAddress = kADC128D818_SlaveAddress6;
             break;
         default:

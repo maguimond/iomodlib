@@ -61,17 +61,17 @@ static int BoardConfigCommit(void)
 }
 
 // ----------------------------------------------------------------------------
-int BoardConfigResetFactory(uint8_t inAuxBoardCount)
+int BoardConfigResetFactory(void)
 {
     mBoardConfigPrintInfo("Force defaults");
     // Load defaults in shadow RAM.
-    mBoardConfigSetDefaults(inAuxBoardCount, gBoardConfigShadowRAM);
+    mBoardConfigSetDefaults(gBoardConfigShadowRAM);
     // Commit changes to NVM.
     return BoardConfigCommit();
 }
 
 // ----------------------------------------------------------------------------
-int BoardConfigInit(uint8_t inAuxBoardCount)
+int BoardConfigInit(void)
 {
     // Setup HAL.
     int status = mBoardConfigSetup();
@@ -129,7 +129,7 @@ int BoardConfigInit(uint8_t inAuxBoardCount)
     {
         mBoardConfigPrintInfo("Force defaults");
         // Load defaults in shadow RAM.
-        mBoardConfigSetDefaults(inAuxBoardCount, gBoardConfigShadowRAM);
+        mBoardConfigSetDefaults(gBoardConfigShadowRAM);
         // Commit changes to NVM.
         status = BoardConfigCommit();
     }
