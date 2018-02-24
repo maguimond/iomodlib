@@ -141,25 +141,25 @@ int BoardConfigInit(void)
 }
 
 // ----------------------------------------------------------------------------
-void BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
+int BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
         mBoardConfigPrintInitError("Init incomplete");
-        return;
+        return -1;
     }
 
     // Validate address and size arguments.
     if (inSize > kBoardConfigPageSize)
     {
         mBoardConfigPrintPageError("Bad page size");
-        return;
+        return -1;
     }
 
     if (((inAddress / kBoardConfigPageSize) != ((inAddress + inSize) / kBoardConfigPageSize)) && ((inAddress + inSize) % kBoardConfigPageSize))
     {
         mBoardConfigPrintPageError("Write across pages");
-        return;
+        return -1;
     }
 
     mBoardConfigLock();
@@ -174,16 +174,18 @@ void BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
     mBoardConfigWrite(inAddress, inData, inSize, crc);
 
     mBoardConfigUnlock();
+
+    return 0;
 }
 
 // ----------------------------------------------------------------------------
-void BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
+int BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
 {
     if (!gIsBoardConfigInitDone)
     {
         mBoardConfigPrintInitError("Init incomplete");
         memset(outData, 0, inSize);
-        return;
+        return -1;
     }
 
     mBoardConfigLock();
@@ -192,6 +194,8 @@ void BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize)
     memcpy(outData, gBoardConfigShadowRAM + inAddress, inSize);
 
     mBoardConfigUnlock();
+
+    return 0;
 }
 
 // ----------------------------------------------------------------------------

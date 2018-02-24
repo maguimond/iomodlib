@@ -36,31 +36,39 @@ static uint8_t gADCI2CAddressTable[kADC128D818_MaxAddresses];
 // ----------------------------------------------------------------------------
 uint8_t IOModGetADCAddress(uint8_t inSlaveID)
 {
-    // TODO: Adapt when board is revised to support at least 6 ADC addresses: https://github.com/GeniALE/CarteAcquisitionControle/issues/41.
     // Set local devices addresses.
     uint8_t adcAddress;
     switch (inSlaveID)
     {
-        case 1:
+        case 0:
             adcAddress = kADC128D818_SlaveAddress1;
             break;
-        case 2:
+        case 1:
             adcAddress = kADC128D818_SlaveAddress2;
             break;
-        case 3:
+        case 2:
             adcAddress = kADC128D818_SlaveAddress3;
             break;
-        case 4:
+        case 3:
             adcAddress = kADC128D818_SlaveAddress4;
             break;
-        case 5:
+        case 4:
             adcAddress = kADC128D818_SlaveAddress5;
             break;
-        case 6:
+        case 5:
             adcAddress = kADC128D818_SlaveAddress6;
             break;
-        default:
+        case 6:
             adcAddress = kADC128D818_SlaveAddress7;
+            break;
+        case 7:
+            adcAddress = kADC128D818_SlaveAddress8;
+            break;
+        case 8:
+            adcAddress = kADC128D818_SlaveAddress9;
+            break;
+        default:
+            adcAddress = 0xFF;
             break;
     }
 

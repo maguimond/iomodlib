@@ -44,9 +44,9 @@ int BoardConfigResetFactory(void);
 /// Initialize the master, retrieve configuration from non-volatile memory.
 int BoardConfigInit(void);
 /// Write configuration data to master card.
-void BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize);
+int BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize);
 ///
-void BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize);
+int BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize);
 ///
 uint8_t BoardConfigReadByte(uint8_t inAddress);
 
