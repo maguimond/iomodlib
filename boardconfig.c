@@ -37,7 +37,7 @@ static uint8_t gBoardConfigShadowRAM[kBoardConfigTotalSize];
 static int BoardConfigCommit(void)
 {
     // Erase sector.
-    int status = S25FL256Erase4K(kPartition_1_FirstSector);
+    int status = S25FL256Erase4K(kPartition_Config_FirstSector);
 
     // TODO: REMOVE, use config tool
     // Compute CRCs.
