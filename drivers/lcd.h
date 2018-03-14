@@ -171,7 +171,7 @@ typedef struct
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
-int LCDSetup(void);
+int LCDSetup(bool inIsDriverAlreadySetup);
 ///
 uint16_t LCDGetWidth(void);
 ///

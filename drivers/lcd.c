@@ -70,9 +70,14 @@ static void LCDSetOrientation(uint8_t inOrientation)
 }
 
 // ----------------------------------------------------------------------------
-int LCDSetup(void)
+int LCDSetup(bool inIsDriverAlreadySetup)
 {
-    int status = mLCDDriverSetup();
+    int status = 0;
+    // If bootloader has already configured the LCD, do not setup.
+    if (!inIsDriverAlreadySetup)
+    {
+        status = mLCDDriverSetup();
+    }
 
     if (status == 0)
     {
