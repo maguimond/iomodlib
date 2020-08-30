@@ -32,8 +32,11 @@ extern "C"
 // Function prototypes
 // ----------------------------------------------------------------------------
 
-/// Display control: Convert values (inNumber) to be displayed and put then to outDigits[].
-void BCDDisplayNumber(int inNumber, char* outDigits);
+/// Display control: Convert values (inNumber) to be displayed to outDigits[].
+void DecimalTo7Seg(int inNumber, char* outDigits);
+
+/// Display control: Convert ASCII characters (inChar) to be displayed to outDigits[].
+void CharTo7Seg(const char* inString, char* outDigits);
 
 /// BCD digit scan: Call this function in the timer interrupt to sweep digits.
 void ChangeDigit(void);
