@@ -8,7 +8,7 @@
 // ---------------------------------------------------------------------------
  
 // Standard includes.
-#include "math.h"
+#include <math.h>
 
 // Common includes.
 #include "usp10973.h"
@@ -32,7 +32,7 @@ int USP10973BetaComputeTemperature(uint16_t inRawADCValue, int32_t* outTemperatu
 
     // Get resistance value of the thermistor (valueR2 = ((RREF * VREF) / VADC) - RREF).
     // FIXME: Linux platform (uint32_t)kADCMaxValue does not work?
-    uint32_t valueR2 = (((double)kADCMaxValue / (uint32_t)inRawADCValue) - (uint32_t)kRREF);
+    uint32_t valueR2 = (((uint32_t)kADCMaxValue / (uint32_t)inRawADCValue) - (uint32_t)kRREF);
 
     double beta = 0;
     double valueR1 = 0;
