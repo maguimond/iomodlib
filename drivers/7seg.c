@@ -160,13 +160,13 @@ void CharTo7Seg(const char* inString, char* outDigits)
 {
     int digitIndex, asciiIndex;
 
-    for (digitIndex = kSevenSegmentNumberOfDigits; digitIndex >= 0 ; digitIndex --)
+    for (digitIndex = kSevenSegmentNumberOfDigits - 1; digitIndex >= 0 ; -- digitIndex)
     {
         asciiIndex = *inString - kSevenSegmentASCIIOffset;
-        inString ++;
         if ((asciiIndex >= 0) && (asciiIndex < kSevenSegmentASCIITableSize))
         {
             outDigits[digitIndex] = SevenSegmentASCII[asciiIndex];
         }
+        inString ++;
     }
 }
