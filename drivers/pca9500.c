@@ -63,7 +63,7 @@ int PCA9500IOExpanderGetIO(uint8_t inSlaveAddress, uint8_t inIOPin, uint8_t* out
 
     int status = I2CRead(kPCA9500_IOExpanderBaseAddress | inSlaveAddress, &(gPCA9500[inSlaveAddress].portState), 1);
 
-    if (&(gPCA9500[inSlaveAddress].portState) && (1 << inIOPin))
+    if (gPCA9500[inSlaveAddress].portState & (1 << inIOPin))
     {
         *outState = 1;
     }

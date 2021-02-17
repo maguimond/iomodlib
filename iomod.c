@@ -20,6 +20,7 @@
 #include "iomod.h"
 #include "boardconfig.h"
 #include "conversion.h"
+#include "utils.h"
 
 // Drivers includes.
 #include "adc128d818.h"
@@ -133,13 +134,13 @@ IOModPortStatus_e IOModGetInternalTemperature(uint8_t inSlaveID, int32_t* outADC
     if (!(adcRawData & kADC128D818_TemperatureMSBMask))
     {
         // If temperature is positive.
-        // If DOUT[MSb] = 0: + Temp(°C) = DOUT(dec) / 2.
+        // If DOUT[MSb] = 0: + Temp(ï¿½C) = DOUT(dec) / 2.
         *outADCData = (adcRawData * 1000) >> 1;
     }
     else
     {
         // If temperature is negative.
-        // If DOUT[MSb] = 1: – Temp(°C) = [29 – DOUT(dec)] / 2 .
+        // If DOUT[MSb] = 1: ï¿½ Temp(ï¿½C) = [29 ï¿½ DOUT(dec)] / 2 .
         *outADCData = -(int32_t)(((0x0200 - adcRawData) * 1000) >> 1);
     }
 
