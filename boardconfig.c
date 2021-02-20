@@ -34,7 +34,7 @@ static bool gIsBoardConfigInitDone = false;
 static uint8_t gBoardConfigShadowRAM[kBoardConfigTotalSize];
 
 // ----------------------------------------------------------------------------
-static int BoardConfigCommit(void)
+int BoardConfigCommit(void)
 {
     // Erase sector.
     int status = S25FL256Erase4K(kPartition_Config_FirstSector);

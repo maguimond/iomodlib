@@ -40,6 +40,8 @@ typedef struct
 // Function prototypes
 // ----------------------------------------------------------------------------
 ///
+int BoardConfigCommit(void);
+
 int BoardConfigResetFactory(void);
 /// Initialize the master, retrieve configuration from non-volatile memory.
 int BoardConfigInit(void);
