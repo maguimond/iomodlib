@@ -41,9 +41,9 @@ static int BoardConfigCommit(void)
 
     // TODO: REMOVE, use config tool
     // Compute CRCs.
-    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_FactoryAddressOffset), kBoardConfig_FactorySize);
+    uint16_t crc = CRC16ComputeCRC(0, (uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_FactoryAddressOffset), kBoardConfig_FactorySize);
     *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_Factory_CRC)) = mHTONS(crc);
-    crc = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
+    crc = CRC16ComputeCRC(0, (uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
     *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_User_CRC)) = mHTONS(crc);
 
     // Write shadow RAM to NVM.
@@ -93,8 +93,8 @@ int BoardConfigInit(void)
     }
 
     // Validate config retrieved from NVM.
-    uint16_t factoryCRC = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_FactoryAddressOffset), kBoardConfig_FactorySize);
-    uint16_t userCRC = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
+    uint16_t factoryCRC = CRC16ComputeCRC(0, (uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_FactoryAddressOffset), kBoardConfig_FactorySize);
+    uint16_t userCRC = CRC16ComputeCRC(0, (uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
 
     // Validate config.
     bool isConfigValid = false;
@@ -168,7 +168,7 @@ int BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize)
     memcpy(gBoardConfigShadowRAM + inAddress, inData, inSize);
 
     // Recompute the CRC
-    uint16_t crc = CRC16ComputeCRC((uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
+    uint16_t crc = CRC16ComputeCRC(0, (uint8_t*)(gBoardConfigShadowRAM + kBoardConfig_UserAddressOffset), kBoardConfig_UserSize);
     *((uint16_t*)(gBoardConfigShadowRAM + kBoardConfig_User_CRC)) = mHTONS(crc);
 
     mBoardConfigWrite(inAddress, inData, inSize, crc);
