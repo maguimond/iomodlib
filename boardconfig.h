@@ -22,34 +22,32 @@
 // Standard includes.
 #include <stdint.h>
 
-// User config.
-#include "boardconfiguser.h"
+typedef uint32_t (*BoardConfig_WriteToMedium)(uint32_t address, const uint8_t* data, uint32_t size);
+typedef uint32_t (*BoardConfig_ReadFromMedium)(uint32_t address, uint8_t* destination, uint32_t size);
 
-// ----------------------------------------------------------------------------
-// Data types
-// ----------------------------------------------------------------------------
-typedef struct
-{
-    uint8_t pcbVersionMaj;
-    uint8_t pcbVersionMin;
-    uint8_t fwVersionMaj;
-    uint8_t fwVersionMin;
-} boardConfigInfo_t;
+typedef void (*BoardConfig_Lock)(void* lock);
+typedef void (*BoardConfig_Unlock)(void* lock);
 
-// ----------------------------------------------------------------------------
-// Function prototypes
-// ----------------------------------------------------------------------------
-///
-int BoardConfigCommit(void);
+typedef void (*BoardConfig_GetDefault)(uint8_t* destination, uint32_t destination_size);
 
-int BoardConfigResetFactory(void);
-/// Initialize the master, retrieve configuration from non-volatile memory.
-int BoardConfigInit(void);
-/// Write configuration data to master card.
-int BoardConfigWrite(uint8_t inAddress, uint8_t* inData, uint8_t inSize);
-///
-int BoardConfigRead(uint8_t inAddress, uint8_t* outData, uint8_t inSize);
-///
-uint8_t BoardConfigReadByte(uint8_t inAddress);
+typedef struct{
+    BoardConfig_WriteToMedium write_to_medium;
+    BoardConfig_ReadFromMedium read_from_medium;
+    BoardConfig_GetDefault get_defaults;
+    //Optionals
+    void* shadow_lock;
+    BoardConfig_Lock lock;
+    BoardConfig_Unlock unlock;
+}board_config_config_t;
+
+//TODO: Remove the _ once all changes are done...
+
+int BoardConfig_Init(board_config_config_t* config);
+
+int BoardConfig_Commit(void);
+
+int BoardConfig_Write(uint32_t inAddress, const uint8_t* inData, uint32_t inSize);
+
+int BoardConfig_Read(uint32_t inAddress, uint8_t* outData, uint32_t inSize);
 
 #endif // BOARDCONFIG_H_

@@ -61,15 +61,15 @@ class GivenShadowMemoryTestBase : public ::testing::Test{
             memset(&shadow, 0, sizeof(shadow));
             ShadowMemoryMediumMock_SetGlobalPointer(&medium_mock);
             shadow.memory_size = sizeof(test_data);
-            shadow.memory = (uint8_t*)calloc(sizeof(test_data), 1);
+            shadow.memory = (uint8_t*)malloc(sizeof(test_data));
+            memset(shadow.memory, 1, sizeof(test_data));
+            memset(test_data, 2, sizeof(test_data));
             shadow.write_to_medium = ShadowMemoryMediumMock_WriteToMedium;
             shadow.read_from_medium = ShadowMemoryMediumMock_ReadFromMedium;
             shadow.lock = ShadowMemoryMediumMock_Lock;
             shadow.unlock = ShadowMemoryMediumMock_Unlock;
         }
         void SetUp() override {
-            EXPECT_CALL(medium_mock, Lock(_)).Times(1);
-            EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
             ON_CALL(medium_mock, WriteToMedium(_, _, _)).WillByDefault(ReturnArg<2>());
             ON_CALL(medium_mock, ReadFromMedium(_, _, _)).WillByDefault(ReturnArg<2>());
         }
@@ -82,37 +82,182 @@ class GivenShadowMemoryTestBase : public ::testing::Test{
 };
 
 TEST_F(GivenShadowMemoryTestBase, WhenSyncCalledThenShouldReturnSize){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
     EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(1);
     EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
-    EXPECT_EQ(SHADOW_MEMORY_Sync(&shadow), shadow.memory_size);
+    EXPECT_EQ(SHADOW_MEMORY_Sync(&shadow), sizeof(test_data));
 }
 
 TEST_F(GivenShadowMemoryTestBase, WhenFlushCalledThenShouldReturnSize){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
     EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
     EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(1);
-    EXPECT_EQ(SHADOW_MEMORY_Flush(&shadow), shadow.memory_size);
+    EXPECT_EQ(SHADOW_MEMORY_Flush(&shadow), sizeof(test_data));
 }
 
 TEST_F(GivenShadowMemoryTestBase, WhenWriteCalledThenShouldReturnSize){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
     EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
     EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
-    EXPECT_EQ(SHADOW_MEMORY_Write(&shadow, 0, test_data, sizeof(test_data)), shadow.memory_size);    
+    EXPECT_EQ(SHADOW_MEMORY_Write(&shadow, 0, test_data, sizeof(test_data)), sizeof(test_data));    
 }
 
 TEST_F(GivenShadowMemoryTestBase, WhenWriteThroughCalledThenShouldReturnSize){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
     EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
     EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(1);
-    EXPECT_EQ(SHADOW_MEMORY_WriteThrough(&shadow, 0, test_data, sizeof(test_data)), shadow.memory_size);    
+    EXPECT_EQ(SHADOW_MEMORY_WriteThrough(&shadow, 0, test_data, sizeof(test_data)), sizeof(test_data));    
 }
 
 TEST_F(GivenShadowMemoryTestBase, WhenReadCalledThenShouldReturnSize){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
     EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
     EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
-    EXPECT_EQ(SHADOW_MEMORY_Read(&shadow, 0, test_data, sizeof(test_data)), shadow.memory_size);    
+    EXPECT_EQ(SHADOW_MEMORY_Read(&shadow, 0, test_data, sizeof(test_data)), sizeof(test_data));    
 }
 
 TEST_F(GivenShadowMemoryTestBase, WhenReadThroughCalledThenShouldReturnSize){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
     EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(1);
     EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
-    EXPECT_EQ(SHADOW_MEMORY_ReadThrough(&shadow, 0, test_data, sizeof(test_data)), shadow.memory_size);    
+    EXPECT_EQ(SHADOW_MEMORY_ReadThrough(&shadow, 0, test_data, sizeof(test_data)), sizeof(test_data));    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenReadCalledThenShouldReturnDataInShadow){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    SHADOW_MEMORY_Read(&shadow, 0, test_data, sizeof(test_data));    
+    EXPECT_EQ(memcmp(shadow.memory, test_data, sizeof(test_data)), 0);
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenWriteCalledThenDataInShadowShouldBeWrittenData){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    SHADOW_MEMORY_Write(&shadow, 0, test_data, sizeof(test_data));    
+    EXPECT_EQ(memcmp(shadow.memory, test_data, sizeof(test_data)), 0);
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenWriteCalledWithOffsetEqualToSizeThenShouldReturnZero){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(0);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(0);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    EXPECT_EQ(SHADOW_MEMORY_Write(&shadow, sizeof(test_data), test_data, sizeof(test_data)), 0);    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenWriteThroughCalledWithOffsetEqualToSizeThenShouldReturnZero){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(0);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(0);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    EXPECT_EQ(SHADOW_MEMORY_WriteThrough(&shadow, sizeof(test_data), test_data, sizeof(test_data)), 0);    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenReadCalledWithOffsetEqualToSizeThenShouldReturnZero){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(0);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(0);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    EXPECT_EQ(SHADOW_MEMORY_Read(&shadow, sizeof(test_data), test_data, sizeof(test_data)), 0);   
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenReadThroughCalledWithOffsetEqualToSizeThenShouldReturnZero){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(0);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(0);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    EXPECT_EQ(SHADOW_MEMORY_ReadThrough(&shadow, sizeof(test_data), test_data, sizeof(test_data)), 0);    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenWriteCalledWithOffsetThenShouldReturnSizeMinusOffset){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    EXPECT_EQ(SHADOW_MEMORY_Write(&shadow, 50, test_data, sizeof(test_data)), sizeof(test_data) - 50);    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenWriteThroughCalledWithOffsetThenShouldReturnSizeMinusOffset){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(1);
+    EXPECT_EQ(SHADOW_MEMORY_WriteThrough(&shadow, 50, test_data, sizeof(test_data)), sizeof(test_data) - 50);    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenReadCalledWithOffsetThenShouldReturnSizeMinusOffset){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    EXPECT_EQ(SHADOW_MEMORY_Read(&shadow, 50, test_data, sizeof(test_data)), sizeof(test_data) - 50);    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenReadThroughCalledWithOffsetThenShouldReturnSizeMinusOffset){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(1);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    EXPECT_EQ(SHADOW_MEMORY_ReadThrough(&shadow, 50, test_data, sizeof(test_data)), sizeof(test_data) - 50);    
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenWriteCalledWithOffsetThenShouldReturnPartialDataInShadow){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    uint8_t* compare_data = (uint8_t*)malloc(sizeof(test_data));
+    memcpy(compare_data, shadow.memory, 50);
+    memcpy(compare_data + 50, test_data, 50);
+    SHADOW_MEMORY_Write(&shadow, 50, test_data, sizeof(test_data));  
+    EXPECT_EQ(memcmp(compare_data, shadow.memory, shadow.memory_size), 0);
+    free(compare_data);
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenReadCalledWithOffsetThenShouldReturnPartialDataInShadow){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    uint8_t* compare_data = (uint8_t*)malloc(sizeof(test_data));
+    memcpy(compare_data, shadow.memory, 50);
+    memcpy(compare_data + 50, test_data, 50);
+    SHADOW_MEMORY_Read(&shadow, 50, test_data, sizeof(test_data));  
+    EXPECT_EQ(memcmp(compare_data, test_data, shadow.memory_size), 0);
+    free(compare_data);
+}
+
+TEST_F(GivenShadowMemoryTestBase, WhenWriteCalledWithSmallerSizeThenShouldReturnPartialDataInShadow){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    uint8_t* compare_data = (uint8_t*)malloc(sizeof(test_data));
+    memcpy(compare_data, test_data, 50);
+    memcpy(compare_data + 50, shadow.memory, 50);
+    SHADOW_MEMORY_Write(&shadow, 0, test_data, 50);  
+    EXPECT_EQ(memcmp(compare_data, shadow.memory, shadow.memory_size), 0);
+    free(compare_data);
+}
+TEST_F(GivenShadowMemoryTestBase, WhenReadCalledWithSmallerSizeThenShouldReturnPartialDataInShadow){
+    EXPECT_CALL(medium_mock, Lock(_)).Times(1);
+    EXPECT_CALL(medium_mock, Unlock(_)).Times(1);
+    EXPECT_CALL(medium_mock, ReadFromMedium(_, _, _)).Times(0);
+    EXPECT_CALL(medium_mock, WriteToMedium(_, _, _)).Times(0);
+    uint8_t* compare_data = (uint8_t*)malloc(sizeof(test_data));
+    memcpy(compare_data, shadow.memory, 50);
+    memcpy(compare_data + 50, test_data, 50);
+    SHADOW_MEMORY_Read(&shadow, 0, test_data, 50);  
+    EXPECT_EQ(memcmp(compare_data, test_data, shadow.memory_size), 0);
+    free(compare_data);
 }

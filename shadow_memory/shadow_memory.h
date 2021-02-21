@@ -22,8 +22,8 @@
 #include <stdint.h>
 
 // Should return the actual size of the read/write (<= size)
-typedef uint32_t (*SHADOW_MEMEORY_WriteToMedium)(uint32_t address, const uint8_t* data, uint32_t size);
-typedef uint32_t (*SHADOW_MEMEORY_ReadFromMedium)(uint32_t address, uint8_t* destination, uint32_t size);
+typedef uint32_t (*SHADOW_MEMORY_WriteToMedium)(uint32_t address, const uint8_t* data, uint32_t size);
+typedef uint32_t (*SHADOW_MEMORY_ReadFromMedium)(uint32_t address, uint8_t* destination, uint32_t size);
 
 typedef void (*SHADOW_MEMORY_Lock)(void* lock);
 typedef void (*SHADOW_MEMORY_Unlock)(void* lock);
@@ -33,8 +33,8 @@ typedef struct{
     uint8_t* memory;
     uint32_t memory_size;
     uint32_t offset_on_medium;
-    SHADOW_MEMEORY_WriteToMedium write_to_medium;
-    SHADOW_MEMEORY_ReadFromMedium read_from_medium;
+    SHADOW_MEMORY_WriteToMedium write_to_medium;
+    SHADOW_MEMORY_ReadFromMedium read_from_medium;
     //Optionals
     void* shadow_lock;
     SHADOW_MEMORY_Lock lock;
