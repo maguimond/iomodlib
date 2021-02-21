@@ -40,8 +40,6 @@ typedef struct{
     BoardConfig_Unlock unlock;
 }board_config_config_t;
 
-//TODO: Remove the _ once all changes are done...
-
 int BoardConfig_Init(board_config_config_t* config);
 
 int BoardConfig_Commit(void);
