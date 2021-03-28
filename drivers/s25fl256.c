@@ -216,6 +216,8 @@ int S25FL256Erase4K(uint32_t inAddress)
     mIOValidateBus(SPIWriteData(sectorAddress, sizeof(sectorAddress)));
     mFlashCSHigh();
 
+    //TODO: No need to wait here???
+
     return status;
 }
 
